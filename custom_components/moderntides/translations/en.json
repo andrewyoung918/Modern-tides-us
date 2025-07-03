@@ -1,0 +1,61 @@
+{
+    "config": {
+        "title": "Modern Tides",
+        "step": {
+            "user": {
+                "title": "Modern Tides",
+                "description": "Set up the Modern Tides integration",
+                "data": {
+                    "setup_message": "Click Submit to start configuring tide stations."
+                }
+            },
+            "station": {
+                "title": "Add tide station",
+                "description": "Select a station and configure its update interval",
+                "data": {
+                    "station_id": "Station ID",
+                    "station_name": "Custom name (optional)",
+                    "update_interval": "Update interval"
+                }
+            }
+        },
+        "error": {
+            "invalid_station": "Invalid station ID",
+            "station_exists": "This station has already been configured",
+            "cannot_connect": "Could not connect to API"
+        },
+        "abort": {
+            "station_added": "Station added successfully",
+            "station_modified": "Station modified successfully",
+            "station_removed": "Station removed successfully",
+            "station_not_found": "Station not found"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Modern Tides Options",
+                "description": "Manage your tide stations",
+                "data": {
+                    "add_station": "Add new station",
+                    "remove_station": "Remove a station"
+                }
+            },
+            "remove_station": {
+                "title": "Remove station",
+                "description": "Select the station you want to remove",
+                "data": {
+                    "station_to_remove": "Station to remove"
+                }
+            },
+            "modify_station": {
+                "title": "Modify station",
+                "description": "Modify this station's configuration",
+                "data": {
+                    "station_name": "Custom name",
+                    "update_interval": "Update interval"
+                }
+            }
+        }
+    }
+}

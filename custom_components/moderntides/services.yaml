@@ -1,0 +1,16 @@
+# Servicios para la integración Modern Tides
+update_tides:
+  name: Actualizar datos de mareas
+  description: Fuerza una actualización de los datos de mareas para una estación específica
+  fields:
+    station_id:
+      name: ID de la estación
+      description: El ID de la estación de mareas a actualizar
+      example: "22"
+      required: true
+      selector:
+        text:
+
+refresh_all_stations:
+  name: Actualizar todas las estaciones
+  description: Fuerza una actualización de los datos para todas las estaciones configuradas

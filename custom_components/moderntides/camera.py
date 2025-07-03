@@ -1,27 +1,61 @@
 """Camera platform for Modern Tides integration."""
+import base64
 import io
 import logging
 import os
+import time
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-import matplotlib.dates as mdates
-import matplotlib.figure as mplfig
-import matplotlib.pyplot as plt
-import numpy as np
-from homeassistant.components.camera import Camera
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.util import dt as dt_util
-from PIL import Image
+try:
+    from homeassistant.components.camera import Camera
+    from homeassistant.config_entries import ConfigEntry
+    from homeassistant.core import HomeAssistant
+    from homeassistant.helpers.entity_platform import AddEntitiesCallback
+    from homeassistant.util import dt as dt_util
+except ImportError:
+    # Definiciones fallback para evitar errores de importación
+    Camera = object
+    ConfigEntry = object
+    HomeAssistant = object
+    AddEntitiesCallback = object
+    dt_util = None
 
 from .const import CONF_STATION_ID, CONF_STATION_NAME, CONF_STATIONS, DOMAIN
 from .sensor import TideBaseCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
+# Imagen estática para usar cuando no se puede generar el gráfico
+PLACEHOLDER_SVG = """
+<svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="400" fill="#1D1E1F"/>
+  <text x="400" y="100" font-family="Arial" font-size="24" fill="white" text-anchor="middle">Datos de mareas</text>
+  <text x="400" y="140" font-family="Arial" font-size="18" fill="#0066cc" text-anchor="middle">Estación: {station_name}</text>
+  
+  <!-- Olas decorativas -->
+  <path d="M 50,250 C 100,230 150,270 200,250 C 250,230 300,270 350,250 C 400,230 450,270 500,250 C 550,230 600,270 650,250 C 700,230 750,270 800,250" 
+        stroke="white" stroke-width="3" fill="none" opacity="0.6"/>
+  <path d="M 50,280 C 100,260 150,300 200,280 C 250,260 300,300 350,280 C 400,260 450,300 500,280 C 550,260 600,300 650,280 C 700,260 750,300 800,280" 
+        stroke="white" stroke-width="2" fill="none" opacity="0.4"/>
+  <path d="M 50,310 C 100,290 150,330 200,310 C 250,290 300,330 350,310 C 400,290 450,330 500,310 C 550,290 600,330 650,310 C 700,290 750,330 800,310" 
+        stroke="white" stroke-width="2" fill="none" opacity="0.2"/>
+        
+  <!-- Información de mareas -->
+  <text x="400" y="200" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Próxima marea alta: {high_time}</text>
+  <text x="400" y="230" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Altura: {high_height} m</text>
+  
+  <text x="400" y="280" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Próxima marea baja: {low_time}</text>
+  <text x="400" y="310" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Altura: {low_height} m</text>
+  
+  <text x="400" y="360" font-family="Arial" font-size="12" fill="#cccccc" text-anchor="middle">Datos proporcionados por el Instituto Hidrográfico de la Marina</text>
+  <text x="750" y="380" font-family="Arial" font-size="10" fill="#cccccc" text-anchor="end">Actualizado: {updated_time}</text>
+</svg>
+"""
+
+
 async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+    hass, entry, async_add_entities
 ) -> None:
     """Set up Modern Tides camera based on a config entry."""
     stations = entry.data.get(CONF_STATIONS, [])
@@ -41,8 +75,8 @@ class TideCurveCamera(Camera):
 
     def __init__(
         self,
-        hass: HomeAssistant,
-        entry: ConfigEntry,
+        hass,
+        entry,
         station: Dict[str, Any],
     ):
         """Initialize tide curve camera."""
@@ -72,158 +106,57 @@ class TideCurveCamera(Camera):
         await self.coordinator.async_request_refresh()
         
         if not self.coordinator.data:
-            return None
+            return self._create_error_image("No hay datos disponibles")
         
-        # Generate a curve image based on the tide data
-        image_bytes = await self.hass.async_add_executor_job(self._generate_tide_curve)
+        # Generate a simple SVG image with tide information
+        image_bytes = await self.hass.async_add_executor_job(self._generate_tide_info)
         return image_bytes
 
-    def _generate_tide_curve(self) -> bytes:
-        """Generate a tide curve image based on the coordinator data."""
+    def _generate_tide_info(self) -> bytes:
+        """Generate a simple SVG with tide information."""
         try:
-            daily_data = self.coordinator.data.get("daily", {})
+            high_time = "No disponible"
+            high_height = "N/A"
+            low_time = "No disponible"
+            low_height = "N/A"
             
-            if (
-                not daily_data
-                or "mareas" not in daily_data
-                or "datos" not in daily_data["mareas"]
-                or not daily_data["mareas"]["datos"]
-            ):
-                if self._last_image:
-                    return self._last_image
-                return self._create_error_image("No tide data available")
+            # Extract tide data if available
+            if self.coordinator.data:
+                if "next_high_tide" in self.coordinator.data and self.coordinator.data["next_high_tide"]:
+                    high_tide = self.coordinator.data["next_high_tide"]
+                    high_time = high_tide["time"].strftime("%H:%M") if "time" in high_tide else "No disponible"
+                    high_height = f"{high_tide['height']:.2f}" if "height" in high_tide else "N/A"
+                
+                if "next_low_tide" in self.coordinator.data and self.coordinator.data["next_low_tide"]:
+                    low_tide = self.coordinator.data["next_low_tide"]
+                    low_time = low_tide["time"].strftime("%H:%M") if "time" in low_tide else "No disponible"
+                    low_height = f"{low_tide['height']:.2f}" if "height" in low_tide else "N/A"
             
-            # Extract tide data
-            tide_points = []
-            high_points = []
-            low_points = []
+            # Fill the SVG template with data
+            svg_content = PLACEHOLDER_SVG.format(
+                station_name=self.station_name,
+                high_time=high_time,
+                high_height=high_height,
+                low_time=low_time,
+                low_height=low_height,
+                updated_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            )
             
-            for point in daily_data["mareas"]["datos"]:
-                if "fecha" in point and "altura" in point:
-                    time_str = point["fecha"]
-                    height = float(point["altura"])
-                    tide_type = point.get("tipo")
-                    
-                    try:
-                        # Convert to datetime object
-                        tide_time = dt_util.parse_datetime(time_str)
-                        if tide_time:
-                            tide_points.append((tide_time, height))
-                            
-                            # Categorize as high or low tide
-                            if tide_type == "pleamar":
-                                high_points.append((tide_time, height))
-                            elif tide_type == "bajamar":
-                                low_points.append((tide_time, height))
-                    except ValueError:
-                        continue
-            
-            # Sort all points by time
-            tide_points.sort(key=lambda x: x[0])
-            
-            if not tide_points:
-                if self._last_image:
-                    return self._last_image
-                return self._create_error_image("No valid tide points found")
-            
-            # Create the plot
-            fig = plt.figure(figsize=(10, 5))
-            ax = fig.add_subplot(111)
-            
-            # Plot the tide curve
-            times, heights = zip(*tide_points)
-            ax.plot(times, heights, 'b-', linewidth=2, label='Tide')
-            
-            # Highlight high tides
-            if high_points:
-                high_times, high_heights = zip(*high_points)
-                ax.scatter(high_times, high_heights, c='red', marker='^', s=100, label='High Tide')
-            
-            # Highlight low tides
-            if low_points:
-                low_times, low_heights = zip(*low_points)
-                ax.scatter(low_times, low_heights, c='green', marker='v', s=100, label='Low Tide')
-            
-            # Add current time marker
-            now = dt_util.now()
-            if times[0] <= now <= times[-1]:
-                # Find current height by interpolating
-                ax.axvline(x=now, color='orange', linestyle='--', linewidth=2, label='Current Time')
-            
-            # Format the plot
-            ax.set_title(f'Tide Chart: {self.station_name}', fontsize=14)
-            ax.set_xlabel('Time', fontsize=12)
-            ax.set_ylabel('Height (m)', fontsize=12)
-            
-            # Format the x-axis to show hours
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-            ax.xaxis.set_major_locator(mdates.HourLocator(interval=2))
-            
-            # Add grid and legend
-            ax.grid(True, linestyle='--', alpha=0.7)
-            ax.legend(loc='best')
-            
-            # Add water level fill
-            min_height = min(heights)
-            ax.fill_between(times, min_height, heights, color='lightblue', alpha=0.5)
-            
-            # Set dark style background for Home Assistant integration
-            fig.set_facecolor('#121212')
-            ax.set_facecolor('#1D1E1F')
-            ax.spines['bottom'].set_color('white')
-            ax.spines['top'].set_color('white')
-            ax.spines['left'].set_color('white')
-            ax.spines['right'].set_color('white')
-            ax.tick_params(colors='white')
-            ax.xaxis.label.set_color('white')
-            ax.yaxis.label.set_color('white')
-            ax.title.set_color('white')
-            
-            # Adjust layout
-            fig.tight_layout()
-            
-            # Convert to image bytes
-            buf = io.BytesIO()
-            fig.savefig(buf, format='png')
-            buf.seek(0)
-            
-            # Clean up plot
-            plt.close(fig)
-            
-            # Save image for future use if data fails to load
-            self._last_image = buf.getvalue()
-            return self._last_image
+            # Convert SVG to bytes
+            svg_bytes = svg_content.encode("utf-8")
+            return svg_bytes
             
         except Exception as err:
-            _LOGGER.error("Error generating tide curve: %s", err)
-            if self._last_image:
-                return self._last_image
+            _LOGGER.error("Error generating tide info: %s", err)
             return self._create_error_image(f"Error: {err}")
 
     def _create_error_image(self, message: str) -> bytes:
-        """Create an image showing an error message."""
-        # Create a simple image with text
-        fig = plt.figure(figsize=(10, 5))
-        ax = fig.add_subplot(111)
-        
-        ax.text(0.5, 0.5, message, 
-                horizontalalignment='center',
-                verticalalignment='center',
-                fontsize=14, color='red',
-                transform=ax.transAxes)
-        
-        # Set dark style background
-        fig.set_facecolor('#121212')
-        ax.set_facecolor('#1D1E1F')
-        ax.set_xticks([])
-        ax.set_yticks([])
-        
-        # Convert to image bytes
-        buf = io.BytesIO()
-        fig.savefig(buf, format='png')
-        buf.seek(0)
-        
-        # Clean up plot
-        plt.close(fig)
-        
-        return buf.getvalue()
+        """Create a simple SVG showing an error message."""
+        error_svg = f"""
+        <svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
+          <rect width="800" height="400" fill="#1D1E1F"/>
+          <text x="400" y="200" font-family="Arial" font-size="24" fill="red" text-anchor="middle">{message}</text>
+          <text x="400" y="240" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Por favor, compruebe los logs para más información</text>
+        </svg>
+        """
+        return error_svg.encode("utf-8")

@@ -2,11 +2,23 @@
 import logging
 from typing import Any, Dict, Optional
 
-import voluptuous as vol
-from homeassistant import config_entries
-from homeassistant.core import callback
-from homeassistant.data_entry_flow import FlowResult
-import homeassistant.helpers.config_validation as cv
+try:
+    import voluptuous as vol
+except ImportError:
+    # Manejar la importación si falla
+    vol = None
+
+try:
+    from homeassistant import config_entries
+    from homeassistant.core import callback
+    from homeassistant.data_entry_flow import FlowResult
+    import homeassistant.helpers.config_validation as cv
+except ImportError:
+    # Definiciones fallback en caso de que falle la importación
+    callback = lambda func: func
+    FlowResult = Dict[str, Any]
+    cv = None
+    config_entries = None
 
 from .const import (
     CONF_STATION_ID,

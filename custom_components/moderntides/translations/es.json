@@ -1,0 +1,61 @@
+{
+    "config": {
+        "title": "Mareas Modernas",
+        "step": {
+            "user": {
+                "title": "Modern Tides",
+                "description": "Configura la integración de Mareas Modernas",
+                "data": {
+                    "setup_message": "Haz clic en Enviar para comenzar a configurar estaciones de mareas."
+                }
+            },
+            "station": {
+                "title": "Añadir estación de mareas",
+                "description": "Selecciona una estación y configura su intervalo de actualización",
+                "data": {
+                    "station_id": "ID de la estación",
+                    "station_name": "Nombre personalizado (opcional)",
+                    "update_interval": "Intervalo de actualización"
+                }
+            }
+        },
+        "error": {
+            "invalid_station": "ID de estación no válido",
+            "station_exists": "Esta estación ya ha sido configurada",
+            "cannot_connect": "No se pudo conectar al API"
+        },
+        "abort": {
+            "station_added": "Estación añadida correctamente",
+            "station_modified": "Estación modificada correctamente",
+            "station_removed": "Estación eliminada correctamente",
+            "station_not_found": "No se encontró la estación"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Opciones de Modern Tides",
+                "description": "Gestiona tus estaciones de mareas",
+                "data": {
+                    "add_station": "Añadir nueva estación",
+                    "remove_station": "Eliminar una estación"
+                }
+            },
+            "remove_station": {
+                "title": "Eliminar estación",
+                "description": "Selecciona la estación que deseas eliminar",
+                "data": {
+                    "station_to_remove": "Estación a eliminar"
+                }
+            },
+            "modify_station": {
+                "title": "Modificar estación",
+                "description": "Modifica la configuración de esta estación",
+                "data": {
+                    "station_name": "Nombre personalizado",
+                    "update_interval": "Intervalo de actualización"
+                }
+            }
+        }
+    }
+}

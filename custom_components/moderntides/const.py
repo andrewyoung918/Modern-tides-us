@@ -3,6 +3,10 @@
 DOMAIN = "moderntides"
 PLATFORMS = ["sensor", "camera"]
 
+# Metadata para asegurar que Home Assistant encuentre la integración
+INTEGRATION_TITLE = "Modern Tides"
+INTEGRATION_DOMAIN = DOMAIN
+
 # Configuration options
 CONF_STATIONS = "stations"
 CONF_STATION_ID = "station_id"
