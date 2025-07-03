@@ -1,6 +1,7 @@
 """Tide API client for Modern Tides integration."""
 import datetime
 import logging
+import traceback
 from typing import Any, Dict, List, Optional
 
 import requests
@@ -23,13 +24,22 @@ class TideApiClient:
             response.raise_for_status()
             data = response.json()
             
+            # Print the complete structure for debugging
+            _LOGGER.debug("API response structure: %s", data)
+            
+            # Check both possible keys for the port list
             if "mareas" in data and "puertos" in data["mareas"]:
                 return data["mareas"]["puertos"]
+            elif "estaciones" in data and "puertos" in data["estaciones"]:
+                return data["estaciones"]["puertos"]
             
-            _LOGGER.error("Invalid data format received from API")
+            # Log the received response for debugging
+            _LOGGER.error("Invalid data format received from API: %s", data)
             return []
-        except requests.RequestException as err:
+        except Exception as err:
             _LOGGER.error("Error fetching tide stations: %s", err)
+            import traceback
+            _LOGGER.error("Traceback: %s", traceback.format_exc())
             return []
 
     def get_daily_tides(self, station_id: str, date: Optional[str] = None) -> Dict[str, Any]:

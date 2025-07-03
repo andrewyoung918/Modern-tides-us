@@ -9,9 +9,10 @@ Un componente personalizado para Home Assistant que proporciona datos de mareas 
 - Consulta de mareas en tiempo real para puertos españoles
 - Muestra la altura actual de la marea
 - Información detallada sobre la próxima marea alta y baja
-- Gráfico visual de la curva de mareas
-- Configuración personalizable del intervalo de actualización
-- Soporte para múltiples puertos/estaciones de mareas
+- Visualización SVG con información de mareas
+- Configuración personalizable del intervalo de actualización por estación
+- Soporte para múltiples puertos/estaciones de mareas simultáneamente
+- Actualizaciones eficientes de datos para todas las estaciones
 
 ## Instalación
 

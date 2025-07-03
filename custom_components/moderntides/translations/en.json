@@ -4,25 +4,32 @@
         "step": {
             "user": {
                 "title": "Modern Tides",
-                "description": "Set up the Modern Tides integration",
+                "description": "Configure Modern Tides integration",
                 "data": {
                     "setup_message": "Click Submit to start configuring tide stations."
                 }
             },
             "station": {
-                "title": "Add tide station",
+                "title": "Add Tide Station",
                 "description": "Select a station and configure its update interval",
                 "data": {
                     "station_id": "Station ID",
                     "station_name": "Custom name (optional)",
                     "update_interval": "Update interval"
                 }
+            },
+            "add_another": {
+                "title": "Add Another Station",
+                "description": "You currently have {station_count} station(s) configured. Would you like to add another?",
+                "data": {
+                    "add_another": "Add another station"
+                }
             }
         },
         "error": {
             "invalid_station": "Invalid station ID",
             "station_exists": "This station has already been configured",
-            "cannot_connect": "Could not connect to API"
+            "cannot_connect": "Failed to connect to the API"
         },
         "abort": {
             "station_added": "Station added successfully",
@@ -41,15 +48,24 @@
                     "remove_station": "Remove a station"
                 }
             },
+            "add_station": {
+                "title": "Add Station",
+                "description": "Select a new station to add",
+                "data": {
+                    "station_id": "Station ID",
+                    "station_name": "Custom name (optional)",
+                    "update_interval": "Update interval"
+                }
+            },
             "remove_station": {
-                "title": "Remove station",
+                "title": "Remove Station",
                 "description": "Select the station you want to remove",
                 "data": {
                     "station_to_remove": "Station to remove"
                 }
             },
             "modify_station": {
-                "title": "Modify station",
+                "title": "Modify Station",
                 "description": "Modify this station's configuration",
                 "data": {
                     "station_name": "Custom name",

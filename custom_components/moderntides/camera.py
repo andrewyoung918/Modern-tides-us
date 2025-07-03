@@ -14,7 +14,7 @@ try:
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
     from homeassistant.util import dt as dt_util
 except ImportError:
-    # Definiciones fallback para evitar errores de importación
+    # Fallback definitions to avoid import errors
     Camera = object
     ConfigEntry = object
     HomeAssistant = object
@@ -22,18 +22,17 @@ except ImportError:
     dt_util = None
 
 from .const import CONF_STATION_ID, CONF_STATION_NAME, CONF_STATIONS, DOMAIN
-from .sensor import TideBaseCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-# Imagen estática para usar cuando no se puede generar el gráfico
+# Static image to use when chart generation is not possible
 PLACEHOLDER_SVG = """
 <svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
   <rect width="800" height="400" fill="#1D1E1F"/>
-  <text x="400" y="100" font-family="Arial" font-size="24" fill="white" text-anchor="middle">Datos de mareas</text>
-  <text x="400" y="140" font-family="Arial" font-size="18" fill="#0066cc" text-anchor="middle">Estación: {station_name}</text>
+  <text x="400" y="100" font-family="Arial" font-size="24" fill="white" text-anchor="middle">Tide Data</text>
+  <text x="400" y="140" font-family="Arial" font-size="18" fill="#0066cc" text-anchor="middle">Station: {station_name}</text>
   
-  <!-- Olas decorativas -->
+  <!-- Decorative waves -->
   <path d="M 50,250 C 100,230 150,270 200,250 C 250,230 300,270 350,250 C 400,230 450,270 500,250 C 550,230 600,270 650,250 C 700,230 750,270 800,250" 
         stroke="white" stroke-width="3" fill="none" opacity="0.6"/>
   <path d="M 50,280 C 100,260 150,300 200,280 C 250,260 300,300 350,280 C 400,260 450,300 500,280 C 550,260 600,300 650,280 C 700,260 750,300 800,280" 
@@ -41,15 +40,15 @@ PLACEHOLDER_SVG = """
   <path d="M 50,310 C 100,290 150,330 200,310 C 250,290 300,330 350,310 C 400,290 450,330 500,310 C 550,290 600,330 650,310 C 700,290 750,330 800,310" 
         stroke="white" stroke-width="2" fill="none" opacity="0.2"/>
         
-  <!-- Información de mareas -->
-  <text x="400" y="200" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Próxima marea alta: {high_time}</text>
-  <text x="400" y="230" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Altura: {high_height} m</text>
+  <!-- Tide information -->
+  <text x="400" y="200" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Next high tide: {high_time}</text>
+  <text x="400" y="230" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Height: {high_height} m</text>
   
-  <text x="400" y="280" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Próxima marea baja: {low_time}</text>
-  <text x="400" y="310" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Altura: {low_height} m</text>
+  <text x="400" y="280" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Next low tide: {low_time}</text>
+  <text x="400" y="310" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Height: {low_height} m</text>
   
-  <text x="400" y="360" font-family="Arial" font-size="12" fill="#cccccc" text-anchor="middle">Datos proporcionados por el Instituto Hidrográfico de la Marina</text>
-  <text x="750" y="380" font-family="Arial" font-size="10" fill="#cccccc" text-anchor="end">Actualizado: {updated_time}</text>
+  <text x="400" y="360" font-family="Arial" font-size="12" fill="#cccccc" text-anchor="middle">Data provided by Instituto Hidrográfico de la Marina</text>
+  <text x="750" y="380" font-family="Arial" font-size="10" fill="#cccccc" text-anchor="end">Updated: {updated_time}</text>
 </svg>
 """
 
@@ -63,12 +62,25 @@ async def async_setup_entry(
     if not stations:
         return
 
-    async_add_entities(
-        [
-            TideCurveCamera(hass, entry, station)
-            for station in stations
-        ]
-    )
+    # Get coordinators from hass.data
+    entry_data = hass.data[DOMAIN][entry.entry_id]
+    coordinators = entry_data["coordinators"]
+    
+    _LOGGER.debug("Setting up cameras for %d stations", len(stations))
+    _LOGGER.debug("Available coordinators: %s", list(coordinators.keys()))
+    
+    entities = []
+    for station in stations:
+        station_id = station[CONF_STATION_ID]
+        station_name = station[CONF_STATION_NAME]
+        if station_id in coordinators:
+            _LOGGER.debug("Creating camera for station %s (%s)", station_id, station_name)
+            entities.append(TideCurveCamera(hass, coordinators[station_id]))
+        else:
+            _LOGGER.error("No coordinator found for camera of station %s (%s)", station_id, station_name)
+    
+    if entities:
+        async_add_entities(entities)
 
 class TideCurveCamera(Camera):
     """Camera that generates tide curve images."""
@@ -76,15 +88,14 @@ class TideCurveCamera(Camera):
     def __init__(
         self,
         hass,
-        entry,
-        station: Dict[str, Any],
+        coordinator,
     ):
         """Initialize tide curve camera."""
         super().__init__()
         
-        self.station_id = station[CONF_STATION_ID]
-        self.station_name = station[CONF_STATION_NAME]
-        self.coordinator = TideBaseCoordinator(hass, station)
+        self.coordinator = coordinator
+        self.station_id = coordinator.station_id
+        self.station_name = coordinator.station_name
         self.hass = hass
         
         self._attr_unique_id = f"{self.station_id}_curve_picture"
@@ -106,7 +117,7 @@ class TideCurveCamera(Camera):
         await self.coordinator.async_request_refresh()
         
         if not self.coordinator.data:
-            return self._create_error_image("No hay datos disponibles")
+            return self._create_error_image("No data available")
         
         # Generate a simple SVG image with tide information
         image_bytes = await self.hass.async_add_executor_job(self._generate_tide_info)
@@ -115,21 +126,21 @@ class TideCurveCamera(Camera):
     def _generate_tide_info(self) -> bytes:
         """Generate a simple SVG with tide information."""
         try:
-            high_time = "No disponible"
+            high_time = "Not available"
             high_height = "N/A"
-            low_time = "No disponible"
+            low_time = "Not available"
             low_height = "N/A"
             
             # Extract tide data if available
             if self.coordinator.data:
                 if "next_high_tide" in self.coordinator.data and self.coordinator.data["next_high_tide"]:
                     high_tide = self.coordinator.data["next_high_tide"]
-                    high_time = high_tide["time"].strftime("%H:%M") if "time" in high_tide else "No disponible"
+                    high_time = high_tide["time"].strftime("%H:%M") if "time" in high_tide else "Not available"
                     high_height = f"{high_tide['height']:.2f}" if "height" in high_tide else "N/A"
                 
                 if "next_low_tide" in self.coordinator.data and self.coordinator.data["next_low_tide"]:
                     low_tide = self.coordinator.data["next_low_tide"]
-                    low_time = low_tide["time"].strftime("%H:%M") if "time" in low_tide else "No disponible"
+                    low_time = low_tide["time"].strftime("%H:%M") if "time" in low_tide else "Not available"
                     low_height = f"{low_tide['height']:.2f}" if "height" in low_tide else "N/A"
             
             # Fill the SVG template with data
@@ -156,7 +167,7 @@ class TideCurveCamera(Camera):
         <svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
           <rect width="800" height="400" fill="#1D1E1F"/>
           <text x="400" y="200" font-family="Arial" font-size="24" fill="red" text-anchor="middle">{message}</text>
-          <text x="400" y="240" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Por favor, compruebe los logs para más información</text>
+          <text x="400" y="240" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Please check the logs for more information</text>
         </svg>
         """
         return error_svg.encode("utf-8")

@@ -17,6 +17,13 @@
                     "station_name": "Nombre personalizado (opcional)",
                     "update_interval": "Intervalo de actualización"
                 }
+            },
+            "add_another": {
+                "title": "Añadir otra estación",
+                "description": "Actualmente tienes {station_count} estación(es) configurada(s). ¿Quieres añadir otra?",
+                "data": {
+                    "add_another": "Añadir otra estación"
+                }
             }
         },
         "error": {
@@ -39,6 +46,15 @@
                 "data": {
                     "add_station": "Añadir nueva estación",
                     "remove_station": "Eliminar una estación"
+                }
+            },
+            "add_station": {
+                "title": "Añadir estación",
+                "description": "Selecciona una nueva estación para añadir",
+                "data": {
+                    "station_id": "ID de la estación",
+                    "station_name": "Nombre personalizado (opcional)",
+                    "update_interval": "Intervalo de actualización"
                 }
             },
             "remove_station": {
