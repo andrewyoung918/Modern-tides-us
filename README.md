@@ -1,5 +1,7 @@
 # Modern Tides
 
+<img src="images/logo.svg" alt="Modern Tides Logo" width="150" align="right" />
+
 Un componente personalizado para Home Assistant que proporciona datos de mareas en tiempo real para puertos españoles utilizando la API oficial del Instituto Hidrográfico de la Marina (IHM).
 
 ## Características
@@ -23,7 +25,11 @@ Un componente personalizado para Home Assistant que proporciona datos de mareas 
    - Añade la URL del repositorio: `https://github.com/ALArvi019/moderntides`
    - Selecciona "Integración" como categoría
 3. Busca "Modern Tides" en la tienda de HACS e instálalo
-4. Reinicia Home Assistant
+4. Instala las dependencias requeridas si no las tienes ya:
+   ```bash
+   pip3 install requests matplotlib numpy pillow
+   ```
+5. Reinicia Home Assistant
 
 ### Instalación manual
 
