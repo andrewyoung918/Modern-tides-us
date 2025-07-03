@@ -2,72 +2,72 @@
 
 <img src="images/logo.svg" alt="Modern Tides Logo" width="150" align="right" />
 
-Un componente personalizado para Home Assistant que proporciona datos de mareas en tiempo real para puertos españoles utilizando la API oficial del Instituto Hidrográfico de la Marina (IHM).
+A custom component for Home Assistant that provides real-time tide data for Spanish ports using the official API of the Instituto Hidrográfico de la Marina (IHM).
 
-## Características
+## Features
 
-- Consulta de mareas en tiempo real para puertos españoles
-- Muestra la altura actual de la marea
-- Información detallada sobre la próxima marea alta y baja
-- Visualización SVG con información de mareas
-- Configuración personalizable del intervalo de actualización por estación
-- Soporte para múltiples puertos/estaciones de mareas simultáneamente
-- Actualizaciones eficientes de datos para todas las estaciones
+- Real-time tide queries for Spanish ports
+- Shows current tide height
+- Detailed information about the next high and low tides
+- SVG visualization with tide information
+- Customizable update interval per station
+- Support for multiple tide ports/stations simultaneously
+- Efficient data updates for all stations
 
-## Instalación
+## Installation
 
-### Método HACS (recomendado)
+### HACS Method (recommended)
 
-1. Asegúrate de tener [HACS](https://hacs.xyz/) instalado.
-2. Añade este repositorio como una integración personalizada en HACS:
-   - Ve a HACS > Integraciones
-   - Haz clic en los tres puntos en la esquina superior derecha
-   - Selecciona "Repositorios personalizados"
-   - Añade la URL del repositorio: `https://github.com/ALArvi019/moderntides`
-   - Selecciona "Integración" como categoría
-3. Busca "Modern Tides" en la tienda de HACS e instálalo
-4. Instala las dependencias requeridas si no las tienes ya:
+1. Make sure you have [HACS](https://hacs.xyz/) installed.
+2. Add this repository as a custom integration in HACS:
+   - Go to HACS > Integrations
+   - Click on the three dots in the upper right corner
+   - Select "Custom repositories"
+   - Add the repository URL: `https://github.com/ALArvi019/moderntides`
+   - Select "Integration" as the category
+3. Search for "Modern Tides" in the HACS store and install it
+4. Install the required dependencies if you don't have them already:
    ```bash
-   pip3 install requests matplotlib numpy pillow
+   pip3 install requests
    ```
-5. Reinicia Home Assistant
+5. Restart Home Assistant
 
-### Instalación manual
+### Manual Installation
 
-1. Descarga el último release desde el [repositorio de GitHub](https://github.com/ALArvi019/moderntides)
-2. Copia la carpeta `custom_components/moderntides` a tu carpeta `<config>/custom_components/` de Home Assistant
-3. Reinicia Home Assistant
+1. Download the latest release from the [GitHub repository](https://github.com/ALArvi019/moderntides)
+2. Copy the `custom_components/moderntides` folder to your Home Assistant `<config>/custom_components/` folder
+3. Restart Home Assistant
 
-## Configuración
+## Configuration
 
-1. Ve a Configuración > Integraciones
-2. Haz clic en "Añadir integración"
-3. Busca "Modern Tides" y selecciónalo
-4. Sigue las instrucciones para añadir estaciones de mareas:
-   - Selecciona la estación/puerto deseado
-   - Configura un nombre personalizado (opcional)
-   - Establece el intervalo de actualización (por defecto: 1 hora)
-5. Puedes añadir tantas estaciones como necesites
+1. Go to Configuration > Integrations
+2. Click on "Add integration"
+3. Search for "Modern Tides" and select it
+4. Follow the instructions to add tide stations:
+   - Select the desired station/port
+   - Configure a custom name (optional)
+   - Set the update interval (default: 1 hour)
+5. You can add as many stations as you need
 
-## Entidades creadas
+## Created Entities
 
-Por cada estación de mareas configurada, se crearán las siguientes entidades:
+For each configured tide station, the following entities will be created:
 
-- **Sensor de información de la estación**: Información general sobre la estación de mareas
-- **Sensor de altura actual**: Altura actual de la marea en metros
-- **Sensor de próxima marea alta**: Hora de la próxima marea alta
-- **Sensor de próxima marea baja**: Hora de la próxima marea baja
-- **Cámara de curva de mareas**: Visualización gráfica de la curva de mareas del día
+- **Station information sensor**: General information about the tide station
+- **Current height sensor**: Current tide height in meters
+- **Next high tide sensor**: Time of the next high tide
+- **Next low tide sensor**: Time of the next low tide
+- **Tide curve camera**: Graphical visualization of the day's tide curve
 
-## Tarjeta personalizada
+## Custom Card
 
-Aquí hay un ejemplo de una tarjeta personalizada de tipo `picture-elements` que puedes usar para visualizar los datos de mareas:
+Here's an example of a custom `picture-elements` card that you can use to visualize tide data:
 
 ```yaml
 type: picture-elements
-camera_image: camera.marea_NOMBRE_ESTACION_curve_picture
+camera_image: camera.station_name_curve_picture
 elements:
-  - entity: sensor.marea_NOMBRE_ESTACION_tide_station_info
+  - entity: sensor.station_name_tide_station_info
     style:
       background-color: rgba(24, 24, 28, 0.3)
       bottom: 0
@@ -81,7 +81,7 @@ elements:
       font-weight: bold
       width: 100%
     type: state-label
-  - entity: sensor.marea_NOMBRE_ESTACION_current_tide_height
+  - entity: sensor.station_name_current_tide_height
     style:
       color: white
       font-size: 12px
@@ -92,9 +92,9 @@ elements:
       right: 0
       top: 0
       transform: initial
-    prefix: "Altura actual de la marea : "
+    prefix: "Current tide height: "
     type: state-label
-  - entity: sensor.marea_NOMBRE_ESTACION_next_high_tide_time
+  - entity: sensor.station_name_next_high_tide_time
     style:
       color: white
       font-size: 12px
@@ -105,9 +105,9 @@ elements:
       right: 0
       top: 0
       transform: initial
-    prefix: "Próxima marea alta : "
+    prefix: "Next high tide: "
     type: state-label
-  - entity: sensor.marea_NOMBRE_ESTACION_next_high_tide_height
+  - entity: sensor.station_name_next_high_tide_height
     style:
       color: white
       font-size: 12px
@@ -118,7 +118,7 @@ elements:
       right: 0
       top: 0
       transform: initial
-    prefix: "Altura de la marea alta: "
+    prefix: "High tide height: "
     type: state-label
   - icon: mdi:arrow-up-bold
     style:
@@ -130,7 +130,7 @@ elements:
       top: 0
       transform: scale(0.8)
     type: icon
-  - entity: sensor.marea_NOMBRE_ESTACION_next_low_tide_time
+  - entity: sensor.station_name_next_low_tide_time
     style:
       color: white
       font-weight: bold
@@ -141,9 +141,9 @@ elements:
       right: 0
       top: 0
       transform: initial
-    prefix: "Próxima marea baja : "
+    prefix: "Next low tide: "
     type: state-label
-  - entity: sensor.marea_NOMBRE_ESTACION_next_low_tide_height
+  - entity: sensor.station_name_next_low_tide_height
     style:
       color: white
       font-weight: bold
@@ -155,7 +155,7 @@ elements:
       top: 0
       transform: initial
     type: state-label
-    prefix: "Altura de la marea baja : "
+    prefix: "Low tide height: "
   - icon: mdi:arrow-down-bold
     style:
       color: white
@@ -168,42 +168,334 @@ elements:
     type: icon
 ```
 
-Reemplaza `NOMBRE_ESTACION` con el nombre de tu estación (en minúsculas y con guiones bajos en lugar de espacios).
+Replace `station_name` with your station's name (in lowercase and with underscores instead of spaces).
 
-## Fuente de datos
+## Data Source
 
-Este componente utiliza la API pública del Instituto Hidrográfico de la Marina (IHM):
+This component uses the public API of the Instituto Hidrográfico de la Marina (IHM):
 
-- API de estaciones: `https://ideihm.covam.es/api-ihm/getmarea?request=getlist&format=json`
-- API de mareas diarias: `https://ideihm.covam.es/api-ihm/getmarea?request=gettide&id=STATION_ID&format=json&date=YYYYMMDD`
-- API de mareas mensuales: `https://ideihm.covam.es/api-ihm/getmarea?request=gettide&id=STATION_ID&format=json&month=YYYYMM`
+- Stations API: `https://ideihm.covam.es/api-ihm/getmarea?request=getlist&format=json`
+- Daily tides API: `https://ideihm.covam.es/api-ihm/getmarea?request=gettide&id=STATION_ID&format=json&date=YYYYMMDD`
+- Monthly tides API: `https://ideihm.covam.es/api-ihm/getmarea?request=gettide&id=STATION_ID&format=json&month=YYYYMM`
 
-## Dependencias
+## Dependencies
 
-- `requests`: Para realizar solicitudes HTTP a la API
-- `matplotlib`: Para generar gráficos de curvas de mareas
-- `numpy`: Para procesamiento de datos
-- `Pillow`: Para procesamiento de imágenes
+- `requests`: For making HTTP requests to the API
 
-## Solución de problemas
+## Troubleshooting
 
-Si encuentras algún problema con la integración:
+If you encounter any issues with the integration:
 
-1. Verifica los logs de Home Assistant para mensajes de error específicos
-2. Asegúrate de que tu instancia de Home Assistant tiene conexión a Internet
-3. Verifica que las dependencias están correctamente instaladas
-4. Si el problema persiste, abre un issue en el [repositorio de GitHub](https://github.com/ALArvi019/moderntides/issues)
+1. Check Home Assistant logs for specific error messages
+2. Make sure your Home Assistant instance has an Internet connection
+3. Verify that dependencies are correctly installed
+4. If the problem persists, open an issue in the [GitHub repository](https://github.com/ALArvi019/moderntides/issues)
 
-## Contribuir
+## Contributing
 
-¡Las contribuciones son bienvenidas! Si quieres mejorar este componente:
+Contributions are welcome! If you want to improve this component:
 
-1. Haz un fork del repositorio
-2. Crea una rama para tu característica (`git checkout -b feature/amazing-feature`)
-3. Haz commit de tus cambios (`git commit -m 'Add some amazing feature'`)
-4. Envía los cambios a la rama (`git push origin feature/amazing-feature`)
-5. Abre un Pull Request
+1. Fork the repository
+2. Create a branch for your feature (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push the changes to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ---
 
-Desarrollado por [ALArvi019](https://github.com/ALArvi019) - 2025
+Developed by [ALArvi019](https://github.com/ALArvi019) - 2025
+
+## Custom Dashboards for Displaying Tide Data
+
+Here are several examples of how to display tide information in custom Home Assistant dashboards, using different types of cards.
+
+### Complete Tide Dashboard
+
+Here's an example of a complete dashboard with multiple cards to display all data from a tide station (for example, "El Puerto de Santa María"):
+
+```yaml
+title: Tide Information
+views:
+  - title: Tides - El Puerto de Santa María
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: >
+              # Tides - El Puerto de Santa María
+              
+              Updated information about port tides
+          
+          - type: entities
+            title: General Data
+            entities:
+              - entity: sensor.el_puerto_tide_station_info
+                name: Tide Station
+              - entity: sensor.el_puerto_current_tide_height
+                name: Current Height
+                icon: mdi:waves
+          
+          - type: glance
+            title: Upcoming Tides
+            entities:
+              - entity: sensor.el_puerto_next_high_tide_time
+                name: Next High Tide
+                icon: mdi:arrow-up-bold
+              - entity: sensor.el_puerto_next_low_tide_time
+                name: Next Low Tide
+                icon: mdi:arrow-down-bold
+          
+          - type: picture-entity
+            entity: camera.el_puerto_curve_picture
+            camera_view: auto
+            name: Tide Chart
+```
+
+### Entity Card
+
+This card displays all tide data in a compact format:
+
+```yaml
+type: entities
+title: Tides - El Puerto de Santa María
+entities:
+  - entity: sensor.el_puerto_tide_station_info
+    name: Station
+  - entity: sensor.el_puerto_current_tide_height
+    name: Current Height
+    icon: mdi:waves
+  - type: divider
+  - entity: sensor.el_puerto_next_high_tide_time
+    name: Next High Tide
+    icon: mdi:arrow-up-bold
+  - entity: sensor.el_puerto_next_low_tide_time
+    name: Next Low Tide
+    icon: mdi:arrow-down-bold
+  - type: divider
+  - entity: camera.el_puerto_curve_picture
+    name: Tide Chart
+```
+
+### Advanced Mushroom Card
+
+If you have the custom Mushroom cards installed, you can create a more attractive visualization:
+
+```yaml
+type: vertical-stack
+cards:
+  - type: custom:mushroom-title-card
+    title: Tides - El Puerto de Santa María
+    subtitle: Instituto Hidrográfico de la Marina
+  
+  - type: custom:mushroom-template-card
+    primary: Current tide height
+    secondary: "{{ states('sensor.el_puerto_current_tide_height') }} m"
+    icon: mdi:waves
+    icon_color: blue
+  
+  - type: horizontal-stack
+    cards:
+      - type: custom:mushroom-template-card
+        primary: Next high tide
+        secondary: >-
+          {{ states('sensor.el_puerto_next_high_tide_time') | as_timestamp | timestamp_custom('%H:%M') }}
+        icon: mdi:arrow-up-bold
+        icon_color: green
+      
+      - type: custom:mushroom-template-card
+        primary: Next low tide
+        secondary: >-
+          {{ states('sensor.el_puerto_next_low_tide_time') | as_timestamp | timestamp_custom('%H:%M') }}
+        icon: mdi:arrow-down-bold
+        icon_color: red
+  
+  - type: picture-entity
+    entity: camera.el_puerto_curve_picture
+    camera_view: auto
+```
+
+### Multiple Stations in a Single Dashboard
+
+If you have multiple stations configured, you can display them all in a single dashboard:
+
+```yaml
+type: grid
+columns: 2
+square: false
+cards:
+  # First station: El Puerto de Santa María
+  - type: custom:mini-graph-card
+    name: El Puerto de Santa María
+    entities:
+      - entity: sensor.el_puerto_current_tide_height
+        name: Height
+    hours_to_show: 24
+    points_per_hour: 2
+    icon: mdi:waves
+    
+  - type: entities
+    title: El Puerto de Santa María
+    entities:
+      - entity: sensor.el_puerto_next_high_tide_time
+        name: Next high tide
+        icon: mdi:arrow-up-bold
+      - entity: sensor.el_puerto_next_low_tide_time
+        name: Next low tide
+        icon: mdi:arrow-down-bold
+        
+  # Second station: Santander
+  - type: custom:mini-graph-card
+    name: Santander
+    entities:
+      - entity: sensor.santander_current_tide_height
+        name: Height
+    hours_to_show: 24
+    points_per_hour: 2
+    icon: mdi:waves
+    
+  - type: entities
+    title: Santander
+    entities:
+      - entity: sensor.santander_next_high_tide_time
+        name: Next high tide
+        icon: mdi:arrow-up-bold
+      - entity: sensor.santander_next_low_tide_time
+        name: Next low tide
+        icon: mdi:arrow-down-bold
+```
+
+### Custom Card with Weather Information
+
+If you want to combine tide information with local weather:
+
+```yaml
+type: vertical-stack
+cards:
+  - type: weather-forecast
+    entity: weather.openweathermap
+    name: Weather in El Puerto de Santa María
+    
+  - type: custom:button-card
+    entity: sensor.el_puerto_current_tide_height
+    icon: mdi:waves
+    name: Current Tide
+    show_state: true
+    styles:
+      card:
+        - background-color: var(--primary-color)
+        - color: var(--text-primary-color)
+      name:
+        - font-size: 15px
+      state:
+        - font-size: 20px
+    tap_action:
+      action: more-info
+      
+  - type: custom:apexcharts-card
+    header:
+      title: Tide Forecast
+      show: true
+    series:
+      - entity: sensor.el_puerto_current_tide_height
+        type: line
+        stroke_width: 3
+        curve: smooth
+        name: Tide Height
+        color: blue
+```
+
+### Ejemplos de Paneles Personalizados
+
+A continuación se muestran varios ejemplos de cómo mostrar la información de las mareas en los paneles de Home Assistant.
+
+### Panel Básico
+
+Para crear un panel básico con la información principal de tu estación (por ejemplo, "El Puerto de Santa María"):
+
+```yaml
+type: entities
+title: Información de Mareas - El Puerto de Santa María
+entities:
+  - entity: sensor.el_puerto_tide_station_info
+    name: Estación
+    icon: mdi:information-outline
+  - entity: sensor.el_puerto_current_tide_height
+    name: Altura actual
+    icon: mdi:waves
+  - entity: sensor.el_puerto_next_high_tide_time
+    name: Próxima pleamar
+    icon: mdi:arrow-up-bold
+  - entity: sensor.el_puerto_next_low_tide_time
+    name: Próxima bajamar
+    icon: mdi:arrow-down-bold
+  - entity: camera.el_puerto_curve_picture
+    name: Gráfico de marea
+```
+
+### Panel Completo con Imagen SVG
+
+```yaml
+type: vertical-stack
+cards:
+  - type: entities
+    title: Mareas El Puerto de Santa María
+    entities:
+      - entity: sensor.el_puerto_current_tide_height
+        name: Altura actual de la marea
+        icon: mdi:waves
+      - entity: sensor.el_puerto_next_high_tide_time
+        name: Próxima pleamar
+        icon: mdi:arrow-up-bold
+        secondary_info: attribute
+        format: datetime
+      - entity: sensor.el_puerto_next_low_tide_time
+        name: Próxima bajamar
+        icon: mdi:arrow-down-bold
+        secondary_info: attribute
+        format: datetime
+  - type: picture-entity
+    entity: camera.el_puerto_curve_picture
+    camera_view: auto
+    show_state: false
+    show_name: false
+```
+
+### Panel con Información Adicional de Altura
+
+```yaml
+type: vertical-stack
+cards:
+  - type: markdown
+    content: >
+      ## Mareas - El Puerto de Santa María
+      
+      **Altura actual:** {{ states('sensor.el_puerto_current_tide_height') }} m
+      
+      **Próxima pleamar:** {{ states('sensor.el_puerto_next_high_tide_time') | as_timestamp | timestamp_custom('%H:%M') }} ({{ state_attr('sensor.el_puerto_next_high_tide_time', 'height') }} m)
+      
+      **Próxima bajamar:** {{ states('sensor.el_puerto_next_low_tide_time') | as_timestamp | timestamp_custom('%H:%M') }} ({{ state_attr('sensor.el_puerto_next_low_tide_time', 'height') }} m)
+  - type: picture-entity
+    entity: camera.el_puerto_curve_picture
+    camera_view: auto
+```
+
+## Automations with Tide Data
+
+You can also create automations based on tide data. For example:
+
+```yaml
+# Automation that notifies you when it's one hour before the next high tide
+automation:
+  - alias: "High tide warning"
+    trigger:
+      - platform: template
+        value_template: >
+          {% set high_tide = states('sensor.el_puerto_next_high_tide_time') %}
+          {% set time_diff = (as_timestamp(high_tide) - as_timestamp(now())) / 60 %}
+          {{ time_diff > 59 and time_diff < 61 }}
+    action:
+      - service: notify.mobile_app
+        data:
+          title: "Tide Alert"
+          message: "Approximately one hour until the next high tide"
+```

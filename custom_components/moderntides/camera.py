@@ -119,12 +119,17 @@ class TideCurveCamera(Camera):
         if not self.coordinator.data:
             return self._create_error_image("No data available")
         
-        # Generate a simple SVG image with tide information
+        # Generate image with tide information
         image_bytes = await self.hass.async_add_executor_job(self._generate_tide_info)
         return image_bytes
+        
+    @property
+    def content_type(self) -> str:
+        """Return the content type of the camera."""
+        return "image/svg+xml"
 
     def _generate_tide_info(self) -> bytes:
-        """Generate a simple SVG with tide information."""
+        """Generate an image with tide information."""
         try:
             high_time = "Not available"
             high_height = "N/A"
@@ -153,16 +158,16 @@ class TideCurveCamera(Camera):
                 updated_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             )
             
-            # Convert SVG to bytes
-            svg_bytes = svg_content.encode("utf-8")
-            return svg_bytes
+            # Return SVG directly as bytes
+            _LOGGER.debug("Using SVG format")
+            return svg_content.encode("utf-8")
             
         except Exception as err:
             _LOGGER.error("Error generating tide info: %s", err)
             return self._create_error_image(f"Error: {err}")
 
     def _create_error_image(self, message: str) -> bytes:
-        """Create a simple SVG showing an error message."""
+        """Create a simple error image."""
         error_svg = f"""
         <svg width="800" height="400" xmlns="http://www.w3.org/2000/svg">
           <rect width="800" height="400" fill="#1D1E1F"/>
@@ -170,4 +175,6 @@ class TideCurveCamera(Camera):
           <text x="400" y="240" font-family="Arial" font-size="16" fill="white" text-anchor="middle">Please check the logs for more information</text>
         </svg>
         """
+        
+        # Return SVG directly
         return error_svg.encode("utf-8")
