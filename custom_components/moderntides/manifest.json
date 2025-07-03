@@ -1,0 +1,10 @@
+{
+  "domain": "moderntides",
+  "name": "Modern Tides",
+  "documentation": "https://github.com/ALArvi019/moderntides",
+  "dependencies": [],
+  "codeowners": ["@ALArvi019"],
+  "requirements": ["requests", "matplotlib", "numpy", "Pillow"],
+  "iot_class": "cloud_polling",
+  "version": "0.1.0"
+}
