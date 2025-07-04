@@ -1,6 +1,6 @@
 # Modern Tides
 
-<img src="images/logo.svg" alt="Modern Tides Logo" width="150" align="right" />
+<img src="images/logo.png" alt="Modern Tides Logo" width="150" align="right" />
 
 A custom component for Home Assistant that provides real-time tide data for Spanish ports using the official API of the Instituto Hidrográfico de la Marina (IHM).
 
