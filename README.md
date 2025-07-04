@@ -9,7 +9,8 @@ A custom component for Home Assistant that provides real-time tide data for Span
 - Real-time tide queries for Spanish ports
 - Shows current tide height
 - Detailed information about the next high and low tides
-- SVG visualization with tide information
+- Beautiful SVG tide charts with smooth curves
+- Camera entity for displaying tide graphs in Lovelace
 - Customizable update interval per station
 - Support for multiple tide ports/stations simultaneously
 - Efficient data updates for all stations
@@ -26,11 +27,7 @@ A custom component for Home Assistant that provides real-time tide data for Span
    - Add the repository URL: `https://github.com/ALArvi019/moderntides`
    - Select "Integration" as the category
 3. Search for "Modern Tides" in the HACS store and install it
-4. Install the required dependencies if you don't have them already:
-   ```bash
-   pip3 install requests
-   ```
-5. Restart Home Assistant
+4. Restart Home Assistant
 
 ### Manual Installation
 
@@ -55,48 +52,336 @@ For each configured tide station, the following entities will be created:
 
 - **Station information sensor**: General information about the tide station
 - **Current height sensor**: Current tide height in meters
-- **Next high tide sensor**: Time of the next high tide
-- **Next low tide sensor**: Time of the next low tide
-- **Tide curve camera**: Graphical visualization of the day's tide curve
+- **Next high tide sensor**: Time and height of the next high tide
+- **Next low tide sensor**: Time and height of the next low tide
+- **Tide plot camera**: Beautiful graphical visualization of the day's tide curve
 
-## Custom Card
+## Dashboard Examples
 
-Here's an example of a custom `picture-elements` card that you can use to visualize tide data:
+Here are various examples of how to display tide information in your Home Assistant dashboards. Replace `STATION_NAME` with your actual station name (in lowercase with underscores instead of spaces).
+
+### 1. Simple Entities Card
+
+```yaml
+type: entities
+title: Tide Information - STATION_NAME
+entities:
+  - entity: sensor.STATION_NAME_tide_station_info
+    name: Station
+    icon: mdi:anchor
+  - entity: sensor.STATION_NAME_current_tide_height
+    name: Current Height
+    icon: mdi:waves
+  - entity: sensor.STATION_NAME_next_high_tide_time
+    name: Next High Tide
+    icon: mdi:arrow-up-bold
+  - entity: sensor.STATION_NAME_next_low_tide_time
+    name: Next Low Tide
+    icon: mdi:arrow-down-bold
+```
+
+### 2. Picture Elements Card with Tide Chart
 
 ```yaml
 type: picture-elements
-camera_image: camera.station_name_curve_picture
+camera_image: camera.STATION_NAME_tide_plot
 elements:
-  - entity: sensor.station_name_tide_station_info
+  - entity: sensor.STATION_NAME_tide_station_info
     style:
-      background-color: rgba(24, 24, 28, 0.3)
+      background-color: rgba(0, 0, 0, 0.7)
       bottom: 0
       color: white
-      font-size: 14px
+      font-size: 16px
       left: 0
-      line-height: 34px
-      padding: 0 15px
+      line-height: 40px
+      padding: 0 20px
       pointer-events: none
-      transform: initial
       font-weight: bold
       width: 100%
     type: state-label
-  - entity: sensor.station_name_current_tide_height
+  - entity: sensor.STATION_NAME_current_tide_height
     style:
+      background-color: rgba(0, 100, 200, 0.8)
       color: white
-      font-size: 12px
-      line-height: 32px
-      margin: 150px 5px
+      font-size: 14px
+      line-height: 30px
+      padding: 5px 15px
+      border-radius: 15px
       pointer-events: none
       font-weight: bold
-      right: 0
-      top: 0
-      transform: initial
-    prefix: "Current tide height: "
+      right: 10px
+      top: 10px
+    prefix: "Current: "
+    suffix: " m"
     type: state-label
-  - entity: sensor.station_name_next_high_tide_time
+  - entity: sensor.STATION_NAME_next_high_tide_time
     style:
+      background-color: rgba(0, 150, 0, 0.8)
       color: white
+      font-size: 12px
+      line-height: 25px
+      padding: 3px 10px
+      border-radius: 10px
+      pointer-events: none
+      font-weight: bold
+      right: 10px
+      top: 55px
+    prefix: "↑ "
+    type: state-label
+  - entity: sensor.STATION_NAME_next_low_tide_time
+    style:
+      background-color: rgba(200, 0, 0, 0.8)
+      color: white
+      font-size: 12px
+      line-height: 25px
+      padding: 3px 10px
+      border-radius: 10px
+      pointer-events: none
+      font-weight: bold
+      right: 10px
+      top: 90px
+    prefix: "↓ "
+    type: state-label
+```
+
+### 3. Glance Card
+
+```yaml
+type: glance
+title: Tides Overview
+entities:
+  - entity: sensor.STATION_NAME_current_tide_height
+    name: Current
+    icon: mdi:waves
+  - entity: sensor.STATION_NAME_next_high_tide_time
+    name: Next High
+    icon: mdi:arrow-up-bold
+  - entity: sensor.STATION_NAME_next_low_tide_time
+    name: Next Low
+    icon: mdi:arrow-down-bold
+```
+
+### 4. Vertical Stack with Chart
+
+```yaml
+type: vertical-stack
+cards:
+  - type: markdown
+    content: |
+      # Tide Information - STATION_NAME
+      Real-time tide data and predictions
+  
+  - type: picture-entity
+    entity: camera.STATION_NAME_tide_plot
+    camera_view: auto
+    aspect_ratio: 2:1
+  
+  - type: horizontal-stack
+    cards:
+      - type: gauge
+        entity: sensor.STATION_NAME_current_tide_height
+        min: 0
+        max: 4
+        name: Current Height
+        unit: m
+        severity:
+          green: 1.5
+          yellow: 0.5
+          red: 0
+      
+      - type: entities
+        entities:
+          - entity: sensor.STATION_NAME_next_high_tide_time
+            name: Next High Tide
+            icon: mdi:arrow-up-bold
+          - entity: sensor.STATION_NAME_next_low_tide_time
+            name: Next Low Tide
+            icon: mdi:arrow-down-bold
+```
+
+### 5. Multiple Stations Dashboard
+
+```yaml
+type: grid
+title: Spanish Ports Tides
+columns: 2
+cards:
+  - type: picture-elements
+    camera_image: camera.cadiz_tide_plot
+    elements:
+      - entity: sensor.cadiz_tide_station_info
+        style:
+          bottom: 0
+          left: 0
+          background-color: rgba(0, 0, 0, 0.7)
+          color: white
+          font-size: 14px
+          padding: 10px
+          width: 100%
+        type: state-label
+  
+  - type: picture-elements
+    camera_image: camera.barcelona_tide_plot
+    elements:
+      - entity: sensor.barcelona_tide_station_info
+        style:
+          bottom: 0
+          left: 0
+          background-color: rgba(0, 0, 0, 0.7)
+          color: white
+          font-size: 14px
+          padding: 10px
+          width: 100%
+        type: state-label
+  
+  - type: picture-elements
+    camera_image: camera.valencia_tide_plot
+    elements:
+      - entity: sensor.valencia_tide_station_info
+        style:
+          bottom: 0
+          left: 0
+          background-color: rgba(0, 0, 0, 0.7)
+          color: white
+          font-size: 14px
+          padding: 10px
+          width: 100%
+        type: state-label
+  
+  - type: picture-elements
+    camera_image: camera.santander_tide_plot
+    elements:
+      - entity: sensor.santander_tide_station_info
+        style:
+          bottom: 0
+          left: 0
+          background-color: rgba(0, 0, 0, 0.7)
+          color: white
+          font-size: 14px
+          padding: 10px
+          width: 100%
+        type: state-label
+```
+
+### 6. Compact Mobile-Friendly Card
+
+```yaml
+type: picture-elements
+camera_image: camera.STATION_NAME_tide_plot
+elements:
+  - entity: sensor.STATION_NAME_current_tide_height
+    style:
+      top: 5px
+      right: 5px
+      background-color: rgba(0, 0, 0, 0.8)
+      color: white
+      padding: 5px 10px
+      border-radius: 20px
+      font-size: 12px
+      font-weight: bold
+    prefix: "Now: "
+    suffix: "m"
+    type: state-label
+  
+  - entity: sensor.STATION_NAME_next_high_tide_time
+    style:
+      top: 35px
+      right: 5px
+      background-color: rgba(0, 150, 0, 0.8)
+      color: white
+      padding: 3px 8px
+      border-radius: 15px
+      font-size: 10px
+    prefix: "↑ "
+    type: state-label
+  
+  - entity: sensor.STATION_NAME_next_low_tide_time
+    style:
+      top: 55px
+      right: 5px
+      background-color: rgba(200, 0, 0, 0.8)
+      color: white
+      padding: 3px 8px
+      border-radius: 15px
+      font-size: 10px
+    prefix: "↓ "
+    type: state-label
+```
+
+### 7. Card with Custom Styling
+
+```yaml
+type: picture-elements
+camera_image: camera.STATION_NAME_tide_plot
+elements:
+  - type: custom:button-card
+    entity: sensor.STATION_NAME_current_tide_height
+    name: Current Tide
+    show_state: true
+    show_icon: false
+    styles:
+      card:
+        - position: absolute
+        - top: 10px
+        - left: 10px
+        - width: 120px
+        - height: 60px
+        - background-color: rgba(255, 255, 255, 0.9)
+        - border-radius: 10px
+        - font-size: 12px
+      name:
+        - font-weight: bold
+        - color: "#333"
+      state:
+        - font-size: 18px
+        - color: "#0066cc"
+        - font-weight: bold
+```
+
+## Available Entities
+
+After adding a station, you'll have access to these entities (replace `STATION_NAME` with your station's name):
+
+- `sensor.STATION_NAME_tide_station_info` - Station information
+- `sensor.STATION_NAME_current_tide_height` - Current tide height in meters
+- `sensor.STATION_NAME_next_high_tide_time` - Next high tide time
+- `sensor.STATION_NAME_next_low_tide_time` - Next low tide time
+- `camera.STATION_NAME_tide_plot` - Tide chart visualization
+
+## Data Source
+
+This component uses the public API of the Instituto Hidrográfico de la Marina (IHM):
+
+- Stations API: `https://ideihm.covam.es/api-ihm/getmarea?request=getlist&format=json`
+- Daily tides API: `https://ideihm.covam.es/api-ihm/getmarea?request=gettide&id=STATION_ID&format=json&date=YYYYMMDD`
+- Monthly tides API: `https://ideihm.covam.es/api-ihm/getmarea?request=gettide&id=STATION_ID&format=json&month=YYYYMM`
+
+## Troubleshooting
+
+If you encounter any issues with the integration:
+
+1. Check Home Assistant logs for specific error messages
+2. Make sure your Home Assistant instance has an Internet connection
+3. Verify that the integration is properly installed
+4. If the problem persists, open an issue in the [GitHub repository](https://github.com/ALArvi019/moderntides/issues)
+
+## Contributing
+
+Contributions are welcome! If you want to improve this component:
+
+1. Fork the repository
+2. Create a branch for your feature (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push the changes to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+Developed by [ALArvi019](https://github.com/ALArvi019) - 2025
       font-size: 12px
       line-height: 32px
       margin: 1px 35px

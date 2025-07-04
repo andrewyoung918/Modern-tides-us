@@ -40,6 +40,7 @@ from .const import (
     INTERVALS
 )
 from .tide_api import TideApiClient
+from .plot_manager import TidePlotManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -72,6 +73,15 @@ class TideDataCoordinator(DataUpdateCoordinator):
 
         _LOGGER.debug("Creating coordinator for station %s (%s) with update interval %s",
                       self.station_name, self.station_id, update_interval)
+
+        # Initialize plot manager for tide charts
+        safe_name = self.station_name.lower().replace(" ", "_").replace("-", "_")
+        plot_filename = hass.config.path("www", f"{DOMAIN}_{safe_name}_plot.svg")
+        self.plot_manager = TidePlotManager(
+            name=self.station_name,
+            filename=plot_filename,
+            transparent_background=False
+        )
 
         super().__init__(
             hass,
@@ -117,6 +127,17 @@ class TideDataCoordinator(DataUpdateCoordinator):
                 else:
                     _LOGGER.error("No valid tide data found for station %s", self.station_id)
                 
+                # Generate tide plot
+                try:
+                    if daily_data:
+                        await self.hass.async_add_executor_job(
+                            self.plot_manager.generate_tide_plot, data
+                        )
+                        _LOGGER.debug("Tide plot generated for station %s", self.station_id)
+                except Exception as plot_err:
+                    _LOGGER.warning("Failed to generate tide plot for station %s: %s", 
+                                   self.station_id, plot_err)
+                
                 return data
         except Exception as err:
             _LOGGER.error("Error updating data for station %s: %s", self.station_id, err)
@@ -137,6 +158,7 @@ class TideDataCoordinator(DataUpdateCoordinator):
         
         # Find current tide height (interpolate between points if needed)
         tide_points = []
+        processed_tide_points = []  # For plot manager
         for point in tide_data:
             # Log each point for debugging
             _LOGGER.debug("Processing tide point: %s", point)
@@ -171,6 +193,10 @@ class TideDataCoordinator(DataUpdateCoordinator):
                         tide_time = dt_util.as_local(naive_time + datetime.timedelta(days=1))
                         
                     tide_points.append((tide_time, height))
+                    processed_tide_points.append({
+                        'time': tide_time,
+                        'height': height
+                    })
                     _LOGGER.debug("Added tide point for station %s: time=%s, height=%s", 
                                  self.station_id, tide_time, height)
                 except ValueError as e:
@@ -269,7 +295,8 @@ class TideDataCoordinator(DataUpdateCoordinator):
         return {
             "current_height": current_height,
             "next_high_tide": next_high,
-            "next_low_tide": next_low
+            "next_low_tide": next_low,
+            "tide_points": processed_tide_points
         }
 
 async def async_setup(hass, config):

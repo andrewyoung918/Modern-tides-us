@@ -1,0 +1,74 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Modern Tides Setup",
+        "description": "Configure tide stations for real-time data"
+      },
+      "station": {
+        "title": "Add Tide Station",
+        "description": "Select a tide station to monitor",
+        "data": {
+          "station_id": "Station",
+          "station_name": "Custom Name (optional)",
+          "update_interval": "Update Interval"
+        }
+      },
+      "add_another": {
+        "title": "Add Another Station?",
+        "description": "You have added {station_count} station(s). Would you like to add another?"
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the tide API",
+      "station_exists": "This station is already configured",
+      "invalid_station": "Invalid station selected",
+      "unknown": "Unexpected error occurred"
+    },
+    "abort": {
+      "already_configured": "Modern Tides is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Modern Tides Options",
+        "description": "Manage your tide stations",
+        "data": {
+          "add_station": "Add new station",
+          "remove_station": "Remove station"
+        }
+      },
+      "add_station": {
+        "title": "Add New Station",
+        "description": "Add another tide station to monitor",
+        "data": {
+          "station_id": "Station",
+          "station_name": "Custom Name (optional)",
+          "update_interval": "Update Interval"
+        }
+      },
+      "remove_station": {
+        "title": "Remove Station",
+        "description": "Select a station to remove",
+        "data": {
+          "station_to_remove": "Station to remove"
+        }
+      },
+      "modify_station": {
+        "title": "Modify Station",
+        "description": "Update station configuration",
+        "data": {
+          "station_name": "Custom Name",
+          "update_interval": "Update Interval"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the tide API",
+      "station_exists": "This station is already configured",
+      "no_stations": "No stations configured to remove",
+      "unknown": "Unexpected error occurred"
+    }
+  }
+}

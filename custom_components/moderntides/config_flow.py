@@ -100,7 +100,7 @@ class ModernTidesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         CONF_UPDATE_INTERVAL: user_input.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL),
                     })
                     
-                    # Preguntar si desea añadir otra estación o finalizar
+                    # Ask if user wants to add another station or finish
                     return await self.async_step_add_another()
 
         # Get available stations for dropdown
@@ -147,7 +147,7 @@ class ModernTidesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if user_input.get("add_another", True):
                 return await self.async_step_station()
             else:
-                # Crear la entrada de configuración final
+                # Create the final configuration entry
                 return self.async_create_entry(
                     title="Modern Tides", 
                     data=self._entry_data
@@ -190,7 +190,7 @@ class ModernTidesOptionsFlow(config_entries.OptionsFlow):
             elif user_input.get("remove_station", False):
                 return await self.async_step_remove_station()
             else:
-                # Verificar si se seleccionó modificar alguna estación
+                # Check if user selected to modify any station
                 for key, value in user_input.items():
                     if key.startswith("modify_station_") and value:
                         self.current_station_id = key.replace("modify_station_", "")

@@ -1,51 +1,70 @@
 # Changelog
 
+## 1.0.0 (2025-07-04)
+
+### Major Release
+- **NEW**: Beautiful SVG tide chart visualization with camera entity
+- **NEW**: Modern tide plots with smooth curves and professional styling
+- **NEW**: Complete English translation of all components
+- **IMPROVED**: Enhanced error handling and timezone management
+- **IMPROVED**: Optimized data processing and rendering
+- **REMOVED**: Cleaned up unused files and dependencies
+- **DOCS**: Comprehensive dashboard examples and usage guides
+
+### Features
+- Real-time tide data visualization through camera entity
+- SVG-based charts with smooth interpolated curves
+- Professional styling with grid lines and color coding
+- Multiple dashboard examples for various use cases
+- Support for multiple stations simultaneously
+- Efficient data updates and caching
+
 ## 0.1.9 (2025-07-03)
 
-### Correcciones
-- Eliminadas dependencias externas de cairosvg que causaban problemas en la instalación
-- Vuelta al formato SVG para la visualización de imágenes por compatibilidad
-- Mejorada la robustez del componente para sistemas sin librerías gráficas
+### Bug Fixes
+- Removed external cairosvg dependencies that caused installation issues
+- Reverted to SVG format for image visualization for compatibility
+- Improved component robustness for systems without graphics libraries
 
 ## 0.1.8 (2025-07-03)
 
-### Mejoras
-- Añadida conversión de SVG a PNG para mejorar la compatibilidad de la imagen
-- Añadida dependencia de cairosvg para la conversión de imágenes
-- Mejorada la visualización de la cámara con formato PNG
+### Improvements
+- Added SVG to PNG conversion to improve image compatibility
+- Added cairosvg dependency for image conversion
+- Improved camera visualization with PNG format
 
 ## 0.1.7 (2025-07-03)
 
-### Correcciones
-- Corregido problema con la visualización de la imagen Curve Picture
-- Establecido correctamente el tipo de contenido para la cámara SVG
+### Bug Fixes
+- Fixed issue with Curve Picture image visualization
+- Correctly set content type for SVG camera
 
 ## 0.1.6 (2025-07-03)
 
-### Correcciones
-- Corregido el problema con los sensores de tipo timestamp (pleamar/bajamar) usando objetos datetime con zona horaria
-- Mejorado el procesamiento de datos de mareas para mayor precisión
+### Bug Fixes
+- Fixed issue with timestamp sensors (high/low tide) using timezone-aware datetime objects
+- Improved tide data processing for better accuracy
 
 ## 0.1.5 (2025-07-03)
 
-### Mejoras
-- Añadidos más registros de depuración para facilitar la resolución de problemas
-- Mejorado el manejo de errores durante la inicialización de coordinadores
-- Mejor detección y notificación cuando no se encuentran coordinadores para las estaciones
+### Improvements
+- Added more debug logging to facilitate troubleshooting
+- Improved error handling during coordinator initialization
+- Better detection and notification when coordinators are not found for stations
 
 ## 0.1.4 (2025-07-03)
 
-### Mejoras
-- Correcciones en la identificación de estaciones múltiples
-- Mensajes de error mejorados para problemas de configuración
+### Improvements
+- Fixes in multiple station identification
+- Improved error messages for configuration issues
 
 ## 0.1.3 (2025-07-03)
 
-### Mejoras
-- Centralización de los coordinadores de datos: un único coordinador por estación para todos los sensores relacionados
-- Mejora en la gestión de la actualización de datos para múltiples estaciones
-- Incremento de los logs para mejor seguimiento y depuración
-- Corrección del problema donde no se actualizaban todas las estaciones correctamente
+### Improvements
+- Centralization of data coordinators: single coordinator per station for all related sensors
+- Improved data update management for multiple stations
+- Increased logging for better tracking and debugging
+- Fixed issue where not all stations were updated correctly
 
 ## 0.1.2 (2023-07-06)
 
