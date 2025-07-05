@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.0.2 (2025-07-05)
+
+### Improvements
+- **NEW**: Added moderntides domain to Home Assistant brands repository
+- **IMPROVED**: Integration now appears with proper branding in HACS and Home Assistant
+- **DOCS**: Updated repository structure for better organization
+
+## 1.0.1 (2025-07-05)
+
+### Bug Fixes
+- **FIXED**: Timezone handling for tide times - now correctly converts UTC API times to local timezone
+- **FIXED**: Proper creation of UTC datetime objects instead of naive datetime objects
+- **IMPROVED**: Better handling of tide times across midnight boundaries
+- **IMPROVED**: Enhanced timezone conversion logic for accurate local time display
+
 ## 1.0.0 (2025-07-04)
 
 ### Major Release
