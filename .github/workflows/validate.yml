@@ -28,7 +28,7 @@ jobs:
       - name: "Check icon files"
         run: |
           errors=0
-          for file in icon.png icon@2x.png logo.png logo@2x.png; do
+          for file in icon.png icon@2x.png; do
             url="https://raw.githubusercontent.com/home-assistant/brands/master/custom_integrations/moderntides/$file"
             if ! curl --output /dev/null --silent --head --fail "$url"; then
               echo "❌ Missing: $file"

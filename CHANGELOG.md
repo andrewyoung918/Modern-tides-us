@@ -13,12 +13,13 @@
 ### Infrastructure
 - **BRANDS INTEGRATION**: Added brands validation to GitHub Actions workflow
   - New workflow job validates brand assets availability in HA brands repository
-  - Checks for icon.png, icon@2x.png, logo.png, logo@2x.png files
+  - Checks for icon.png and icon@2x.png files (logo automatically falls back to icon)
   - Provides clear feedback on missing files with direct URLs
 - **PULL REQUEST**: Submitted PR #7406 to Home Assistant brands repository
-  - Adds 256x256 and 512x512 icon/logo variants
+  - Adds 256x256 and 512x512 icon variants (logo omitted as identical to icon)
   - Enables proper icon display in HACS and Home Assistant
   - Professional integration branding for better user experience
+  - Updated per moderator feedback to follow Home Assistant branding guidelines
 
 ### Documentation
 - Updated integration description and feature highlights
