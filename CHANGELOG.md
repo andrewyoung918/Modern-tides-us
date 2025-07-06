@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.1.3 (2025-07-06)
+
+### Added
+- **Dark Mode Icons**: Added `dark_icon.png` and `dark_icon@2x.png` to the Home Assistant brands repository for optimal visibility in dark theme
+- **HACS Default Integration**: Submitted PR to include ModernTides as a default HACS repository for easier discovery and installation
+
+### Improved
+- **Branding**: Enhanced integration visibility with dark mode icon support
+- **Distribution**: Working towards inclusion in HACS default repositories for better user experience
+
+### Technical
+- Created PR #7410 in home-assistant/brands for dark mode icons
+- Created PR #3755 in hacs/default for default repository inclusion
+- Dark mode icons follow Home Assistant design principles for consistent UI experience
+
 ## 1.1.2 (2025-07-06)
 
 ### Branding & Assets
