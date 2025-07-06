@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.1.2 (2025-07-06)
+
+### Branding & Assets
+- **UPDATED BRANDING**: Replaced all icons and logos with new wave-design branding
+  - Updated `icon.png` and `icon.svg` in repository
+  - Generated all brand assets for Home Assistant brands repository
+  - Modern gradient blue wave design representing ocean and tidal movements
+  - Optimized PNG files following Home Assistant branding guidelines
+
+### Infrastructure
+- **BRANDS INTEGRATION**: Added brands validation to GitHub Actions workflow
+  - New workflow job validates brand assets availability in HA brands repository
+  - Checks for icon.png, icon@2x.png, logo.png, logo@2x.png files
+  - Provides clear feedback on missing files with direct URLs
+- **PULL REQUEST**: Submitted PR #7406 to Home Assistant brands repository
+  - Adds 256x256 and 512x512 icon/logo variants
+  - Enables proper icon display in HACS and Home Assistant
+  - Professional integration branding for better user experience
+
+### Documentation
+- Updated integration description and feature highlights
+- Added branding guidelines and asset requirements
+
 ## 1.1.1 (2025-07-06)
 
 ### New Features
