@@ -20,3 +20,30 @@ jobs:
         uses: "home-assistant/actions/hassfest@master"
         with:
           ignore: "brands"
+
+  brands:
+    runs-on: "ubuntu-latest"
+    name: "Check brands"
+    steps:
+      - name: "Check icon files"
+        run: |
+          errors=0
+          for file in icon.png icon@2x.png logo.png logo@2x.png; do
+            url="https://raw.githubusercontent.com/home-assistant/brands/master/custom_integrations/moderntides/$file"
+            if ! curl --output /dev/null --silent --head --fail "$url"; then
+              echo "❌ Missing: $file"
+              echo "URL: $url"
+              errors=$((errors + 1))
+            else
+              echo "✅ Found: $file"
+            fi
+          done
+          if [ $errors -gt 0 ]; then
+            echo ""
+            echo "❌ $errors brand file(s) missing from https://github.com/home-assistant/brands"
+            echo "Please ensure the files are available in the brands repository."
+            exit 1
+          else
+            echo ""
+            echo "✅ All brand files are available!"
+          fi
