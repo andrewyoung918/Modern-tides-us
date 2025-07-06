@@ -5,6 +5,7 @@
 ### Branding & Assets
 - **UPDATED BRANDING**: Replaced all icons and logos with new wave-design branding
   - Updated `icon.png` and `icon.svg` in repository
+  - Updated `images/icon.png` and `images/logo.png` for README display
   - Generated all brand assets for Home Assistant brands repository
   - Modern gradient blue wave design representing ocean and tidal movements
   - Optimized PNG files following Home Assistant branding guidelines
@@ -22,6 +23,7 @@
 ### Documentation
 - Updated integration description and feature highlights
 - Added branding guidelines and asset requirements
+- **README Images**: Updated all repository images with new branding design
 
 ## 1.1.1 (2025-07-06)
 
