@@ -27,8 +27,12 @@ INTERVALS = {
     "24h": 1440
 }
 
-# API endpoints
-API_BASE_URL = "https://ideihm.covam.es/api-ihm/getmarea"
-API_STATION_LIST = f"{API_BASE_URL}?request=getlist&format=json"
-API_DAY_TIDES = f"{API_BASE_URL}?request=gettide&format=json&id={{station_id}}&date={{date}}"
-API_MONTH_TIDES = f"{API_BASE_URL}?request=gettide&format=json&id={{station_id}}&month={{month}}"
+# NOAA CO-OPS API endpoints
+API_BASE_URL = "https://tidesandcurrents.noaa.gov/api/datagetter"
+API_STATION_LIST_URL = "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.json?type=tidepredictions"
+API_PREDICTIONS = f"{API_BASE_URL}?product=predictions&application=NOS.COOPS.TAC.WL&datum=MLLW&station={{station_id}}&time_zone=lst_ldt&units=english&format=json&begin_date={{begin_date}}&end_date={{end_date}}&interval=6"
+API_HILO_PREDICTIONS = f"{API_BASE_URL}?product=predictions&application=NOS.COOPS.TAC.WL&datum=MLLW&station={{station_id}}&time_zone=lst_ldt&units=english&format=json&begin_date={{begin_date}}&end_date={{end_date}}&interval=hilo"
+
+# Default station - Provincetown, MA
+DEFAULT_STATION_ID = "8443970"
+DEFAULT_STATION_NAME = "Provincetown, MA"
