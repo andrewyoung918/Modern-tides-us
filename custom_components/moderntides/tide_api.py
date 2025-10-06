@@ -86,14 +86,22 @@ class TideApiClient:
         
         try:
             # Get detailed predictions
+            _LOGGER.debug("Fetching NOAA predictions for station %s, date %s", station_id, begin_date)
             predictions_response = self.session.get(predictions_url, timeout=15)
             predictions_response.raise_for_status()
             predictions_data = predictions_response.json()
             
             # Get high/low tides
+            _LOGGER.debug("Fetching NOAA high/low tides for station %s, date %s", station_id, begin_date)
             hilo_response = self.session.get(hilo_url, timeout=15)
             hilo_response.raise_for_status()
             hilo_data = hilo_response.json()
+            
+            # Log response sizes for debugging
+            predictions_count = len(predictions_data.get("predictions", []))
+            hilo_count = len(hilo_data.get("predictions", []))
+            _LOGGER.debug("NOAA API returned %d predictions and %d high/low points for station %s", 
+                         predictions_count, hilo_count, station_id)
             
             # Convert NOAA format to format expected by existing code
             converted_data = self._convert_noaa_to_legacy_format(
@@ -103,7 +111,10 @@ class TideApiClient:
             return converted_data
             
         except requests.RequestException as err:
-            _LOGGER.error("Error fetching daily tides from NOAA: %s", err)
+            _LOGGER.error("Error fetching daily tides from NOAA for station %s: %s", station_id, err)
+            # Log the URLs for debugging
+            _LOGGER.debug("Failed predictions URL: %s", predictions_url)
+            _LOGGER.debug("Failed hilo URL: %s", hilo_url)
             return {}
 
     def get_monthly_tides(self, station_id: str, month: Optional[str] = None) -> Dict[str, Any]:
@@ -127,15 +138,21 @@ class TideApiClient:
         )
         
         try:
+            _LOGGER.debug("Fetching NOAA monthly tides for station %s, month %s", station_id, target_month.strftime("%Y-%m"))
             response = self.session.get(hilo_url, timeout=20)
             response.raise_for_status()
             data = response.json()
+            
+            # Log response size for debugging
+            monthly_count = len(data.get("predictions", []))
+            _LOGGER.debug("NOAA API returned %d monthly high/low points for station %s", monthly_count, station_id)
             
             # Convert to format expected by existing code
             return self._convert_monthly_noaa_format(data, station_id, target_month)
             
         except requests.RequestException as err:
-            _LOGGER.error("Error fetching monthly tides from NOAA: %s", err)
+            _LOGGER.error("Error fetching monthly tides from NOAA for station %s: %s", station_id, err)
+            _LOGGER.debug("Failed monthly URL: %s", hilo_url)
             return {}
     
     def _convert_noaa_to_legacy_format(self, predictions_data: Dict, hilo_data: Dict, station_id: str, date: datetime.datetime) -> Dict[str, Any]:
