@@ -8,13 +8,13 @@
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
 [hacs]: https://github.com/hacs/integration
 
-A modern Home Assistant custom integration that provides real-time tide information and beautiful visualizations from Spanish tide stations. This integration fetches data from the Instituto Hidrográfico de la Marina (IHM) and provides sensors for current tide height, next high/low tide times, and a visual camera entity showing tide charts.
+A modern Home Assistant custom integration that provides real-time tide information and beautiful visualizations from US tide stations. This integration fetches data from the NOAA CO-OPS (Center for Operational Oceanographic Products and Services) API and provides sensors for current tide height, next high/low tide times, and a visual camera entity showing tide charts.
 
 ![Modern Tides Logo](images/logo.png)
 
 ## Features
 
-- **Real-time tide data** from official Spanish maritime institute
+- **Real-time tide data** from official NOAA CO-OPS tide stations
 - **Beautiful tide charts** as camera entities (SVG format)
 - **Multi-day tide plots**: Automatically generates plots for 1-7 days
 - **Dual visualization modes**: Light and dark theme support with automatic dual camera entities
@@ -62,10 +62,10 @@ A modern Home Assistant custom integration that provides real-time tide informat
 1. Go to **Settings** → **Devices & Services**
 2. Click **Add Integration**
 3. Search for "Modern Tides"
-4. Select your desired tide station from the dropdown list
+4. Select your desired NOAA tide station from the dropdown list (defaults to Provincetown, MA)
 5. Click **Submit**
 
-The integration will automatically create all necessary entities for your selected station.
+The integration will automatically create all necessary entities for your selected station. If you're unsure which station to choose, the default Provincetown, MA station (8443970) provides excellent coverage for the Northeast US coast.
 
 For each configured tide station, the following entities will be created:
 
@@ -150,7 +150,7 @@ Explore our collection of dashboard examples to get the most out of your Modern 
 
 1. Choose an example that fits your needs
 2. Click on the example link to view detailed instructions
-3. Replace `STATION_NAME` with your actual station name (e.g., `cadiz`, `barcelona`)
+3. Replace `STATION_NAME` with your actual station name (e.g., `provincetown_ma`, `boston_ma`)
 4. Copy the provided YAML code to your Home Assistant dashboard
 5. Enjoy your beautiful tide visualizations!
 
@@ -182,11 +182,25 @@ automation:
 
 ## Data Source
 
-This component uses the public API of the Instituto Hidrográfico de la Marina (IHM):
+This component uses the public NOAA CO-OPS (Center for Operational Oceanographic Products and Services) API:
 
-- Stations API: `https://ideihm.covam.es/api-ihm/getmarea?request=getlist&format=json`
-- Daily tides API: `https://ideihm.covam.es/api-ihm/getmarea?request=gettide&id=STATION_ID&format=json&date=YYYYMMDD`
-- Monthly tides API: `https://ideihm.covam.es/api-ihm/getmarea?request=gettide&id=STATION_ID&format=json&month=YYYYMM`
+- Base API: `https://tidesandcurrents.noaa.gov/api/datagetter`
+- Stations API: `https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations.json?type=tidepredictions`
+- Predictions API: Uses `product=predictions` with station ID, date range, and format parameters
+- Default station: **Provincetown, MA (ID: 8443970)**
+
+The integration provides access to US coastal tide stations from NOAA's official tide and current prediction service.
+
+### Finding NOAA Station IDs
+
+You can find NOAA station IDs by:
+- Using the integration's dropdown list of available stations
+- Visiting [NOAA Tides & Currents](https://tidesandcurrents.noaa.gov/) and searching for your area
+- Popular stations include:
+  - 8443970: Provincetown, MA (default)
+  - 8447930: Boston, MA  
+  - 8518750: The Battery, NY
+  - 8724580: Key West, FL
 
 ## Troubleshooting
 

@@ -26,6 +26,8 @@ from .const import (
     CONF_STATIONS,
     CONF_UPDATE_INTERVAL,
     DEFAULT_UPDATE_INTERVAL,
+    DEFAULT_STATION_ID,
+    DEFAULT_STATION_NAME,
     DOMAIN,
     INTERVALS,
 )
@@ -64,7 +66,8 @@ class ModernTidesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             station_id = user_input[CONF_STATION_ID]
             valid_station_ids = [str(station["id"]) for station in stations]
             
-            if station_id not in valid_station_ids:
+            # Always allow the default station even if API is unavailable
+            if station_id not in valid_station_ids and station_id != DEFAULT_STATION_ID:
                 errors[CONF_STATION_ID] = "invalid_station"
             else:
                 # Find the station name
@@ -75,8 +78,12 @@ class ModernTidesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         station_name = station.get("puerto", station.get("name", f"Station {station_id}"))
                         break
                 
+                # Use default name for default station if not found in API response
                 if not station_name:
-                    station_name = f"Station {station_id}"
+                    if station_id == DEFAULT_STATION_ID:
+                        station_name = DEFAULT_STATION_NAME
+                    else:
+                        station_name = f"Station {station_id}"
                 
                 # Check if station already exists in current config
                 if any(station[CONF_STATION_ID] == station_id for station in self._entry_data[CONF_STATIONS]):
@@ -116,9 +123,13 @@ class ModernTidesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.error("Traceback: %s", traceback.format_exc())
             errors["base"] = "cannot_connect"
 
-        # Prepare the schema for the form
+        # Add default station if stations list is empty
+        if not stations_list:
+            stations_list[DEFAULT_STATION_ID] = f"{DEFAULT_STATION_NAME} ({DEFAULT_STATION_ID})"
+        
+        # Prepare the schema for the form with default station
         schema = vol.Schema({
-            vol.Required(CONF_STATION_ID): vol.In(stations_list) if stations_list else str,
+            vol.Required(CONF_STATION_ID, default=DEFAULT_STATION_ID): vol.In(stations_list),
             vol.Optional(CONF_STATION_NAME, description={"suffix": " (optional)"}): cv.string,
             vol.Optional(CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL): vol.In(
                 {k: f"{k} ({v} min)" for k, v in INTERVALS.items()}
