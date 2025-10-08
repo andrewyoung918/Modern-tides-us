@@ -11,6 +11,225 @@ from homeassistant.util import dt as dt_util
 _LOGGER = logging.getLogger(__name__)
 
 
+class TideTableManager:
+    """Class to manage SVG-based tide table schedules."""
+
+    def __init__(
+        self,
+        name: str,
+        filename: str,
+        dark_mode: bool = False,
+        table_days: int = 3,
+    ):
+        """Initialize the table manager."""
+        self._name = name
+        self._filename = filename
+        self._dark_mode = dark_mode
+        self._table_days = table_days
+
+    def generate_tide_table(
+        self,
+        tide_data: Dict[str, Any],
+        current_time: Optional[datetime.datetime] = None
+    ) -> bool:
+        """Generate a tide table SVG from the given data."""
+        if not tide_data:
+            _LOGGER.warning("Cannot generate table: no tide data provided")
+            return False
+
+        if current_time is None:
+            current_time = dt_util.now()
+
+        try:
+            # Extract extremes (high/low tides) from the data
+            extremes = self._extract_extremes(tide_data)
+
+            if not extremes:
+                _LOGGER.warning("No extremes found for tide table")
+                return False
+
+            # Generate SVG table
+            svg_content = self._generate_svg_table(extremes, current_time)
+
+            # Save SVG
+            return self._save_svg(svg_content)
+
+        except Exception as e:
+            _LOGGER.error(f"Error generating tide table: {e}")
+            return False
+
+    def _extract_extremes(self, tide_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Extract high/low tide extremes from tide data."""
+        extremes = []
+
+        # Check if we have multi-day data
+        if "all_daily_data" in tide_data and tide_data["all_daily_data"]:
+            # Limit to the requested number of days
+            days_to_process = min(self._table_days, len(tide_data["all_daily_data"]))
+
+            for day_idx in range(days_to_process):
+                day_data_info = tide_data["all_daily_data"][day_idx]
+                day_data = day_data_info["data"]
+
+                if day_data and "mareas" in day_data and "datos" in day_data["mareas"]:
+                    if "marea" in day_data["mareas"]["datos"]:
+                        marea_data = day_data["mareas"]["datos"]["marea"]
+
+                        for point in marea_data:
+                            if "tipo" in point and "hora" in point and "altura" in point:
+                                # Parse time
+                                time_str = point["hora"]
+                                date_str = day_data_info["date"]
+
+                                # Combine date and time
+                                day_date = datetime.datetime.strptime(date_str, "%Y%m%d")
+                                time_parts = time_str.split(":")
+                                hours = int(time_parts[0])
+                                minutes = int(time_parts[1])
+
+                                dt = datetime.datetime(
+                                    year=day_date.year,
+                                    month=day_date.month,
+                                    day=day_date.day,
+                                    hour=hours,
+                                    minute=minutes
+                                )
+                                dt = dt_util.as_local(dt)
+
+                                extremes.append({
+                                    'time': dt,
+                                    'height': float(point["altura"]),
+                                    'type': point["tipo"]
+                                })
+
+        return sorted(extremes, key=lambda x: x['time'])
+
+    def _generate_svg_table(
+        self,
+        extremes: List[Dict[str, Any]],
+        current_time: datetime.datetime
+    ) -> str:
+        """Generate SVG table content."""
+
+        # SVG dimensions - make it wide enough for a readable table
+        width, height = 600, 50 + (len(extremes) * 30) + 50  # Dynamic height based on rows
+
+        # Color scheme
+        if self._dark_mode:
+            colors = {
+                'background': '#000000',
+                'text': '#FFFFFF',
+                'title': '#FFFFFF',
+                'high_tide': '#FF6B6B',
+                'low_tide': '#4DABF7',
+                'header': '#666666',
+                'border': '#333333',
+            }
+        else:
+            colors = {
+                'background': '#FFFFFF',
+                'text': '#000000',
+                'title': '#000000',
+                'high_tide': '#DC143C',
+                'low_tide': '#1E90FF',
+                'header': '#CCCCCC',
+                'border': '#DDDDDD',
+            }
+
+        # Start SVG
+        svg_parts = [
+            f'<svg width="{width}" height="{height}" xmlns="http://www.w3.org/2000/svg">',
+            f'<rect width="{width}" height="{height}" fill="{colors["background"]}"/>',
+        ]
+
+        # Title
+        title_text = f"TIDE SCHEDULE ({self._table_days}D) - {self._name.upper()}"
+        svg_parts.append(f'''
+            <text x="{width/2}" y="25" text-anchor="middle" font-family="'Courier New', 'Courier', monospace" font-size="14" font-weight="bold" fill="{colors["title"]}">
+                {title_text}
+            </text>
+        ''')
+
+        # Table headers
+        y_offset = 60
+        col_widths = [120, 80, 100, 100]  # Day, Type, Time, Height
+        col_x = [50, 170, 250, 350]
+
+        headers = ["DATE", "TIDE", "TIME", "HEIGHT"]
+        for i, header in enumerate(headers):
+            svg_parts.append(f'''
+                <text x="{col_x[i]}" y="{y_offset}" text-anchor="start" font-family="'Courier New', 'Courier', monospace" font-size="11" font-weight="bold" fill="{colors["header"]}">
+                    {header}
+                </text>
+            ''')
+
+        # Header separator line
+        svg_parts.append(f'<line x1="40" y1="{y_offset + 5}" x2="{width - 40}" y2="{y_offset + 5}" stroke="{colors["border"]}" stroke-width="1"/>')
+
+        # Table rows
+        y_offset += 25
+        current_date = None
+
+        for extreme in extremes:
+            # Only show future tides
+            if extreme['time'] < current_time:
+                continue
+
+            is_high = extreme['type'] == 'pleamar'
+            tide_color = colors['high_tide'] if is_high else colors['low_tide']
+
+            # Date (only show if different from previous)
+            date_str = extreme['time'].strftime("%a %m/%d")
+            if date_str != current_date:
+                current_date = date_str
+                svg_parts.append(f'''
+                    <text x="{col_x[0]}" y="{y_offset}" text-anchor="start" font-family="'Courier New', 'Courier', monospace" font-size="10" fill="{colors["text"]}">
+                        {date_str}
+                    </text>
+                ''')
+
+            # Tide type
+            tide_type = "HIGH" if is_high else "LOW"
+            svg_parts.append(f'''
+                <text x="{col_x[1]}" y="{y_offset}" text-anchor="start" font-family="'Courier New', 'Courier', monospace" font-size="10" font-weight="bold" fill="{tide_color}">
+                    {tide_type}
+                </text>
+            ''')
+
+            # Time
+            time_str = extreme['time'].strftime("%I:%M%p").lstrip('0')
+            svg_parts.append(f'''
+                <text x="{col_x[2]}" y="{y_offset}" text-anchor="start" font-family="'Courier New', 'Courier', monospace" font-size="10" fill="{colors["text"]}">
+                    {time_str}
+                </text>
+            ''')
+
+            # Height
+            height_str = f"{extreme['height']:.1f}m"
+            svg_parts.append(f'''
+                <text x="{col_x[3]}" y="{y_offset}" text-anchor="start" font-family="'Courier New', 'Courier', monospace" font-size="10" fill="{colors["text"]}">
+                    {height_str}
+                </text>
+            ''')
+
+            y_offset += 30
+
+        svg_parts.append('</svg>')
+
+        return '\n'.join(svg_parts)
+
+    def _save_svg(self, svg_content: str) -> bool:
+        """Save SVG content to file."""
+        try:
+            with open(self._filename, 'w', encoding='utf-8') as f:
+                f.write(svg_content)
+            _LOGGER.debug("Saved tide table to %s", self._filename)
+            return True
+        except Exception as e:
+            _LOGGER.error("Error saving tide table: %s", e)
+            return False
+
+
 class TidePlotManager:
     """Class to manage SVG-based tide plots."""
 

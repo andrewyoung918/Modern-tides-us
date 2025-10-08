@@ -53,30 +53,57 @@ async def async_setup_entry(
                     station_name,
                     entry.entry_id,
                     plot_days=days,
-                    dark_mode=False
+                    dark_mode=False,
+                    is_table=False
                 )
                 entities.append(camera_light)
-                
+
                 # Dark mode camera
                 camera_dark = ModernTidesCamera(
                     coordinator,
                     station_name,
                     entry.entry_id,
                     plot_days=days,
-                    dark_mode=True
+                    dark_mode=True,
+                    is_table=False
                 )
                 entities.append(camera_dark)
-            
-            _LOGGER.debug("Added %d cameras (light and dark, 1-7 days) for station: %s", 14, station_name)
+
+            # Create table cameras for 3, 5, 7 day schedules
+            for table_days in [3, 5, 7]:
+                # Light mode table camera
+                table_camera_light = ModernTidesCamera(
+                    coordinator,
+                    station_name,
+                    entry.entry_id,
+                    plot_days=table_days,
+                    dark_mode=False,
+                    is_table=True
+                )
+                entities.append(table_camera_light)
+
+                # Dark mode table camera
+                table_camera_dark = ModernTidesCamera(
+                    coordinator,
+                    station_name,
+                    entry.entry_id,
+                    plot_days=table_days,
+                    dark_mode=True,
+                    is_table=True
+                )
+                entities.append(table_camera_dark)
+
+            _LOGGER.debug("Added %d cameras (plots + tables, light/dark, multiple days) for station: %s",
+                         len(entities), station_name)
 
     if entities:
         async_add_entities(entities)
 
 
 class ModernTidesCamera(Camera):
-    """Modern Tides camera that displays tide plots."""
+    """Modern Tides camera that displays tide plots or tables."""
 
-    def __init__(self, coordinator, station_name: str, entry_id: str, plot_days: int = 1, dark_mode: bool = False):
+    def __init__(self, coordinator, station_name: str, entry_id: str, plot_days: int = 1, dark_mode: bool = False, is_table: bool = False):
         """Initialize the camera."""
         super().__init__()
         self.coordinator = coordinator
@@ -84,26 +111,33 @@ class ModernTidesCamera(Camera):
         self._entry_id = entry_id
         self._plot_days = plot_days
         self._dark_mode = dark_mode
-        
-        # Set name and unique_id based on mode and days
+        self._is_table = is_table
+
+        # Set name and unique_id based on mode, days, and type
         mode_suffix = " Dark" if dark_mode else ""
-        
-        # For 1 day, keep simple naming for backwards compatibility
-        if plot_days == 1:
-            day_suffix = ""
-            day_id_suffix = ""
+
+        if is_table:
+            # Table naming
+            self._attr_name = f"{station_name} Tide Table {plot_days}D{mode_suffix}"
+            mode_id_suffix = "_dark" if dark_mode else ""
+            self._attr_unique_id = f"{DOMAIN}_{coordinator.station_id}_{entry_id}_table_{plot_days}d{mode_id_suffix}"
         else:
-            day_suffix = f" {plot_days}D"
-            day_id_suffix = f"_{plot_days}d"
-        
-        self._attr_name = f"{station_name} Tide Plot{day_suffix}{mode_suffix}"
-        mode_id_suffix = "_dark" if dark_mode else ""
-        self._attr_unique_id = f"{DOMAIN}_{coordinator.station_id}_{entry_id}_camera{day_id_suffix}{mode_id_suffix}"
-        
+            # Plot naming - for 1 day, keep simple naming for backwards compatibility
+            if plot_days == 1:
+                day_suffix = ""
+                day_id_suffix = ""
+            else:
+                day_suffix = f" {plot_days}D"
+                day_id_suffix = f"_{plot_days}d"
+
+            self._attr_name = f"{station_name} Tide Plot{day_suffix}{mode_suffix}"
+            mode_id_suffix = "_dark" if dark_mode else ""
+            self._attr_unique_id = f"{DOMAIN}_{coordinator.station_id}_{entry_id}_camera{day_id_suffix}{mode_id_suffix}"
+
         # Generate safe name for filename (will be used in async_added_to_hass)
         self._safe_name = station_name.lower().replace(" ", "_").replace("-", "_")
         self._image_filename = None  # Will be set in async_added_to_hass
-        
+
         # Image data
         self._last_image = None
         self._last_updated = None
@@ -129,20 +163,22 @@ class ModernTidesCamera(Camera):
     async def async_added_to_hass(self) -> None:
         """Handle entity added to hass."""
         await super().async_added_to_hass()
-        
+
         # Generate image filename now that we have access to hass
-        # Use the plot_days from this camera instance
-        
-        # Generate filename suffix based on plot days (maintain compatibility)
-        if self._plot_days == 1:
-            # For 1 day, keep the original naming for backwards compatibility
-            filename_suffix = ""
-        else:
-            filename_suffix = f"_{self._plot_days}d"
-            
         mode_suffix = "_dark" if self._dark_mode else ""
-        self._image_filename = self.hass.config.path("www", f"{DOMAIN}_{self._safe_name}_plot{filename_suffix}{mode_suffix}.svg")
-        
+
+        if self._is_table:
+            # Table filename
+            self._image_filename = self.hass.config.path("www", f"{DOMAIN}_{self._safe_name}_table_{self._plot_days}d{mode_suffix}.svg")
+        else:
+            # Plot filename - maintain compatibility for 1-day plots
+            if self._plot_days == 1:
+                filename_suffix = ""
+            else:
+                filename_suffix = f"_{self._plot_days}d"
+
+            self._image_filename = self.hass.config.path("www", f"{DOMAIN}_{self._safe_name}_plot{filename_suffix}{mode_suffix}.svg")
+
         # Set content type for SVG images
         self.content_type = "image/svg+xml"
         

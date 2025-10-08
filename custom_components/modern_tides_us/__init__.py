@@ -43,7 +43,7 @@ from .const import (
     PLOT_DAYS_TO_GENERATE
 )
 from .tide_api import TideApiClient
-from .plot_manager import TidePlotManager
+from .plot_manager import TidePlotManager, TideTableManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -117,6 +117,32 @@ class TideDataCoordinator(DataUpdateCoordinator):
             self.plot_managers[days] = {
                 'light': light_manager,
                 'dark': dark_manager
+            }
+
+        # Create table managers for 3, 5, 7 day schedules
+        self.table_managers = {}
+        for table_days in [3, 5, 7]:
+            # Light mode table manager
+            table_filename_light = hass.config.path("www", f"{DOMAIN}_{safe_name}_table_{table_days}d.svg")
+            light_table_manager = TideTableManager(
+                name=self.station_name,
+                filename=table_filename_light,
+                dark_mode=False,
+                table_days=table_days
+            )
+
+            # Dark mode table manager
+            table_filename_dark = hass.config.path("www", f"{DOMAIN}_{safe_name}_table_{table_days}d_dark.svg")
+            dark_table_manager = TideTableManager(
+                name=self.station_name,
+                filename=table_filename_dark,
+                dark_mode=True,
+                table_days=table_days
+            )
+
+            self.table_managers[table_days] = {
+                'light': light_table_manager,
+                'dark': dark_table_manager
             }
 
         super().__init__(
@@ -219,7 +245,43 @@ class TideDataCoordinator(DataUpdateCoordinator):
                                            days, self.station_id, plot_err)
 
                     _LOGGER.debug("Tide plot generation completed for station %s", self.station_id)
-                
+
+                    # Generate tide tables for 3, 5, 7 day schedules
+                    for table_days in [3, 5, 7]:
+                        try:
+                            # Create data subset for this table range
+                            table_data = {
+                                **data,
+                                "table_days": table_days,
+                                "all_daily_data": all_daily_data[:table_days]
+                            }
+
+                            # Generate light mode table
+                            try:
+                                await self.hass.async_add_executor_job(
+                                    self.table_managers[table_days]['light'].generate_tide_table, table_data
+                                )
+                                _LOGGER.debug("Generated %d-day light table for station %s", table_days, self.station_id)
+                            except Exception as light_err:
+                                _LOGGER.warning("Failed to generate %d-day light table for station %s: %s",
+                                              table_days, self.station_id, light_err)
+
+                            # Generate dark mode table
+                            try:
+                                await self.hass.async_add_executor_job(
+                                    self.table_managers[table_days]['dark'].generate_tide_table, table_data
+                                )
+                                _LOGGER.debug("Generated %d-day dark table for station %s", table_days, self.station_id)
+                            except Exception as dark_err:
+                                _LOGGER.warning("Failed to generate %d-day dark table for station %s: %s",
+                                              table_days, self.station_id, dark_err)
+
+                        except Exception as table_err:
+                            _LOGGER.warning("Failed to generate %d-day tables for station %s: %s",
+                                           table_days, self.station_id, table_err)
+
+                    _LOGGER.debug("Tide table generation completed for station %s", self.station_id)
+
                 return data
         except Exception as err:
             _LOGGER.error("Error updating data for station %s: %s", self.station_id, err)
