@@ -70,18 +70,17 @@ class TideTableManager:
             for day_idx in range(days_to_process):
                 day_data_info = tide_data["all_daily_data"][day_idx]
                 day_data = day_data_info["data"]
+                date_str = day_data_info["date"]
 
-                if day_data and "mareas" in day_data and "datos" in day_data["mareas"]:
-                    if "marea" in day_data["mareas"]["datos"]:
-                        marea_data = day_data["mareas"]["datos"]["marea"]
+                if day_data and "mareas" in day_data:
+                    mareas = day_data["mareas"]
 
-                        for point in marea_data:
-                            if "tipo" in point and "hora" in point and "altura" in point:
-                                # Parse time
-                                time_str = point["hora"]
-                                date_str = day_data_info["date"]
-
-                                # Combine date and time
+                    # Use the dedicated pleamares and bajamares arrays to avoid duplicates
+                    # Process high tides (pleamares)
+                    if "pleamares" in mareas:
+                        for event in mareas["pleamares"]:
+                            if "hora" in event and "altura" in event:
+                                time_str = event["hora"]
                                 day_date = datetime.datetime.strptime(date_str, "%Y%m%d")
                                 time_parts = time_str.split(":")
                                 hours = int(time_parts[0])
@@ -98,8 +97,33 @@ class TideTableManager:
 
                                 extremes.append({
                                     'time': dt,
-                                    'height': float(point["altura"]),
-                                    'type': point["tipo"]
+                                    'height': float(event["altura"]),
+                                    'type': 'pleamar'
+                                })
+
+                    # Process low tides (bajamares)
+                    if "bajamares" in mareas:
+                        for event in mareas["bajamares"]:
+                            if "hora" in event and "altura" in event:
+                                time_str = event["hora"]
+                                day_date = datetime.datetime.strptime(date_str, "%Y%m%d")
+                                time_parts = time_str.split(":")
+                                hours = int(time_parts[0])
+                                minutes = int(time_parts[1])
+
+                                dt = datetime.datetime(
+                                    year=day_date.year,
+                                    month=day_date.month,
+                                    day=day_date.day,
+                                    hour=hours,
+                                    minute=minutes
+                                )
+                                dt = dt_util.as_local(dt)
+
+                                extremes.append({
+                                    'time': dt,
+                                    'height': float(event["altura"]),
+                                    'type': 'bajamar'
                                 })
 
         return sorted(extremes, key=lambda x: x['time'])
