@@ -1,6 +1,6 @@
 """Constants for the Modern Tides integration."""
 
-DOMAIN = "moderntides"
+DOMAIN = "modern_tides_us"
 PLATFORMS = ["sensor", "camera"]
 
 # Metadata to ensure Home Assistant finds the integration

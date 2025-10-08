@@ -1,7 +1,7 @@
 """
-Custom component for Modern Tides integration with Home Assistant.
+Custom component for Modern Tides US integration with Home Assistant.
 For more details about this component, please refer to the documentation at
-https://github.com/ALArvi019/moderntides
+https://github.com/andrewyoung918/Modern-tides-us
 """
 import logging
 from datetime import timedelta
