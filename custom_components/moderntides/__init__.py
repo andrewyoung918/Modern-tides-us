@@ -251,31 +251,30 @@ class TideDataCoordinator(DataUpdateCoordinator):
                 
                 try:
                     # Parse the time (format: "HH:MM")
-                    # Combine with today's date
+                    # API returns local time (lst_ldt parameter)
                     time_parts = time_str.split(":")
                     hours = int(time_parts[0])
                     minutes = int(time_parts[1])
-                    
-                    # Create a UTC datetime first (API times are in UTC)
-                    utc_time = datetime.datetime(
+
+                    # Create a naive datetime with today's date and the time from API
+                    local_time = datetime.datetime(
                         year=now.year,
                         month=now.month,
                         day=now.day,
                         hour=hours,
-                        minute=minutes,
-                        tzinfo=datetime.timezone.utc
+                        minute=minutes
                     )
-                    
-                    # Convert UTC to local timezone
-                    tide_time = dt_util.as_local(utc_time)
-                    
+
+                    # Make it timezone-aware using Home Assistant's timezone
+                    tide_time = dt_util.as_local(local_time)
+
                     # Handle case when tide time is past midnight but still part of today's data
                     if tide_time > now + datetime.timedelta(hours=12):
-                        utc_time_prev_day = utc_time - datetime.timedelta(days=1)
-                        tide_time = dt_util.as_local(utc_time_prev_day)
+                        prev_day_time = local_time - datetime.timedelta(days=1)
+                        tide_time = dt_util.as_local(prev_day_time)
                     elif tide_time < now - datetime.timedelta(hours=12):
-                        utc_time_next_day = utc_time + datetime.timedelta(days=1)
-                        tide_time = dt_util.as_local(utc_time_next_day)
+                        next_day_time = local_time + datetime.timedelta(days=1)
+                        tide_time = dt_util.as_local(next_day_time)
                         
                     tide_points.append((tide_time, height))
                     processed_tide_points.append({
@@ -325,31 +324,30 @@ class TideDataCoordinator(DataUpdateCoordinator):
                 
                 try:
                     # Parse the time (format: "HH:MM")
-                    # Combine with today's date
+                    # API returns local time (lst_ldt parameter)
                     time_parts = time_str.split(":")
                     hours = int(time_parts[0])
                     minutes = int(time_parts[1])
-                    
-                    # Create a UTC datetime first (API times are in UTC)
-                    utc_time = datetime.datetime(
+
+                    # Create a naive datetime with today's date and the time from API
+                    local_time = datetime.datetime(
                         year=now.year,
                         month=now.month,
                         day=now.day,
                         hour=hours,
-                        minute=minutes,
-                        tzinfo=datetime.timezone.utc
+                        minute=minutes
                     )
-                    
-                    # Convert UTC to local timezone
-                    tide_time = dt_util.as_local(utc_time)
-                    
+
+                    # Make it timezone-aware using Home Assistant's timezone
+                    tide_time = dt_util.as_local(local_time)
+
                     # Handle case when tide time is past midnight but still part of today's data
                     if tide_time > now + datetime.timedelta(hours=12):
-                        utc_time_prev_day = utc_time - datetime.timedelta(days=1)
-                        tide_time = dt_util.as_local(utc_time_prev_day)
+                        prev_day_time = local_time - datetime.timedelta(days=1)
+                        tide_time = dt_util.as_local(prev_day_time)
                     elif tide_time < now - datetime.timedelta(hours=12):
-                        utc_time_next_day = utc_time + datetime.timedelta(days=1)
-                        tide_time = dt_util.as_local(utc_time_next_day)
+                        next_day_time = local_time + datetime.timedelta(days=1)
+                        tide_time = dt_util.as_local(next_day_time)
                     
                     if tide_type == "pleamar" and tide_time >= now:
                         high_tides.append((tide_time, height))

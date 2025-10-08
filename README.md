@@ -12,6 +12,10 @@ A modern Home Assistant custom integration that provides real-time tide informat
 
 ![Modern Tides Logo](images/logo.png)
 
+## Credits
+
+This US version is adapted from the original [Modern Tides](https://github.com/ALArvi019/moderntides) integration by [ALArvi019](https://github.com/ALArvi019), which provides tide data for Spanish coastal stations. We've modified it to work with NOAA CO-OPS tide stations for US coastal areas. Thank you to the original author for creating such a great foundation!
+
 ## Features
 
 - **Real-time tide data** from official NOAA CO-OPS tide stations

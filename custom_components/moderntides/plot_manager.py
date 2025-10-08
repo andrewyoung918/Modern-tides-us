@@ -110,10 +110,9 @@ class TidePlotManager:
                                     minutes = int(time_parts[1])
                                     
                                     # Create datetime for this specific day
-                                    dt = day_date.replace(hour=hours, minute=minutes)
-                                    # API returns UTC times, convert to timezone-aware UTC first
-                                    dt = dt_util.utc_from_timestamp(dt.timestamp())
-                                    # Then convert to Home Assistant's local timezone
+                                    # API returns local times (lst_ldt), so combine with the day date
+                                    dt = day_date.replace(hour=hours, minute=minutes, second=0, microsecond=0)
+                                    # Make timezone-aware using Home Assistant's timezone
                                     dt = dt_util.as_local(dt)
                                     
                                     predictions.append({
@@ -158,9 +157,7 @@ class TidePlotManager:
                                 # Combine date and time
                                 datetime_str = f"{fecha_str} {hora_str}"
                                 dt = datetime.datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S")
-                                # API returns UTC times, convert to timezone-aware UTC first
-                                dt = dt_util.utc_from_timestamp(dt.timestamp())
-                                # Then convert to Home Assistant's local timezone
+                                # API returns local times (lst_ldt), make timezone-aware
                                 dt = dt_util.as_local(dt)
                                 
                                 # Get height
@@ -182,52 +179,17 @@ class TidePlotManager:
         return predictions
 
     def _generate_smooth_curve(
-        self, 
-        predictions: List[Dict[str, Any]], 
+        self,
+        predictions: List[Dict[str, Any]],
         current_time: datetime.datetime
     ) -> List[Dict[str, Any]]:
-        """Generate smooth curve points using spline interpolation."""
+        """Generate smooth curve points (NOAA data is already at 6-min intervals, so just sort)."""
         if len(predictions) < 2:
             return predictions
-            
-        # Sort predictions by time
-        sorted_predictions = sorted(predictions, key=lambda x: x['time'])
-        
-        # Generate additional points between existing ones for smooth curve
-        smooth_points = []
-        
-        for i in range(len(sorted_predictions) - 1):
-            p1 = sorted_predictions[i]
-            p2 = sorted_predictions[i + 1]
-            
-            # Add original point
-            smooth_points.append(p1)
-            
-            # Add interpolated points between p1 and p2
-            time_diff = (p2['time'] - p1['time']).total_seconds()
-            height_diff = p2['height'] - p1['height']
-            
-            # Add 5 interpolated points between each pair
-            for j in range(1, 6):
-                ratio = j / 6
-                
-                # Use cubic interpolation for more natural tide curves
-                # This simulates the sinusoidal nature of tides
-                cubic_ratio = 3 * ratio**2 - 2 * ratio**3
-                
-                interp_time = p1['time'] + datetime.timedelta(seconds=time_diff * ratio)
-                interp_height = p1['height'] + height_diff * cubic_ratio
-                
-                smooth_points.append({
-                    'time': interp_time,
-                    'height': interp_height
-                })
-        
-        # Add the last point
-        if sorted_predictions:
-            smooth_points.append(sorted_predictions[-1])
-            
-        return smooth_points
+
+        # Sort predictions by time - NOAA provides 6-minute interval data
+        # which is already dense enough for smooth visualization
+        return sorted(predictions, key=lambda x: x['time'])
 
     def _interpolate_current_height(
         self, 
