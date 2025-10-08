@@ -129,7 +129,7 @@ class TideDataCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Fetch data from API endpoint."""
         try:
-            async with async_timeout.timeout(10):
+            async with async_timeout.timeout(60):
                 # Get data for the maximum number of days (7 days)
                 max_days = max(PLOT_DAYS_TO_GENERATE)
                 all_daily_data = []
@@ -183,29 +183,42 @@ class TideDataCoordinator(DataUpdateCoordinator):
                     _LOGGER.error("No valid tide data found for station %s", self.station_id)
                 
                 # Generate tide plots for all day configurations
-                try:
-                    if daily_data:
-                        for days in PLOT_DAYS_TO_GENERATE:
+                # Each plot is generated independently to prevent one failure from breaking all plots
+                if daily_data:
+                    for days in PLOT_DAYS_TO_GENERATE:
+                        try:
                             # Create data subset for this day range
                             days_data = {
                                 **data,
                                 "plot_days": days,
                                 "all_daily_data": all_daily_data[:days]  # Only include days up to this range
                             }
-                            
+
                             # Generate light mode plot
-                            await self.hass.async_add_executor_job(
-                                self.plot_managers[days]['light'].generate_tide_plot, days_data
-                            )
+                            try:
+                                await self.hass.async_add_executor_job(
+                                    self.plot_managers[days]['light'].generate_tide_plot, days_data
+                                )
+                                _LOGGER.debug("Generated %d-day light plot for station %s", days, self.station_id)
+                            except Exception as light_err:
+                                _LOGGER.warning("Failed to generate %d-day light plot for station %s: %s",
+                                              days, self.station_id, light_err)
+
                             # Generate dark mode plot
-                            await self.hass.async_add_executor_job(
-                                self.plot_managers[days]['dark'].generate_tide_plot, days_data
-                            )
-                            
-                        _LOGGER.debug("Tide plots (light and dark) generated for all day ranges for station %s", self.station_id)
-                except Exception as plot_err:
-                    _LOGGER.warning("Failed to generate tide plots for station %s: %s", 
-                                   self.station_id, plot_err)
+                            try:
+                                await self.hass.async_add_executor_job(
+                                    self.plot_managers[days]['dark'].generate_tide_plot, days_data
+                                )
+                                _LOGGER.debug("Generated %d-day dark plot for station %s", days, self.station_id)
+                            except Exception as dark_err:
+                                _LOGGER.warning("Failed to generate %d-day dark plot for station %s: %s",
+                                              days, self.station_id, dark_err)
+
+                        except Exception as plot_err:
+                            _LOGGER.warning("Failed to generate %d-day plots for station %s: %s",
+                                           days, self.station_id, plot_err)
+
+                    _LOGGER.debug("Tide plot generation completed for station %s", self.station_id)
                 
                 return data
         except Exception as err:
