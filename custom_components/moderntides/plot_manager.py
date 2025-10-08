@@ -291,36 +291,36 @@ class TidePlotManager:
         min_height -= height_range * 0.1
         max_height += height_range * 0.1
         
-        # Define color scheme based on mode
+        # Define color scheme based on mode - High-contrast sci-fi aesthetic
         if self._dark_mode:
             colors = {
-                'background': '#1e1e1e' if not self._transparent_background else 'none',
-                'grid': '#404040',
-                'tide_line': '#4CAF50',  # Green for dark mode
-                'tide_fill': '#4CAF50',  # Green fill with opacity
-                'tide_fill_opacity': '0.2',
-                'current_marker': '#FFF',  # White marker
-                'current_text': '#FFF',   # White text
-                'high_tide': '#FF5722',   # Orange for high tide
-                'low_tide': '#2196F3',    # Blue for low tide
-                'text': '#FFF',           # White text
-                'title': '#FFF',          # White title
-                'axis_text': '#CCC',      # Light gray for axis text
+                'background': '#0a0e14' if not self._transparent_background else 'none',  # Deep space blue-black
+                'grid': '#1a2332',  # Subtle grid for depth
+                'tide_line': '#00f6ff',  # Bright cyan (neon blue)
+                'tide_fill': '#00f6ff',  # Cyan fill with opacity
+                'tide_fill_opacity': '0.15',
+                'current_marker': '#ff00ff',  # Magenta marker
+                'current_text': '#00f6ff',   # Cyan text
+                'high_tide': '#ff0080',   # Hot pink/magenta for high tide
+                'low_tide': '#00ff9f',    # Neon green for low tide
+                'text': '#e0e0e0',        # Near-white text
+                'title': '#00f6ff',       # Cyan title
+                'axis_text': '#8899aa',   # Muted blue-gray for axis text
             }
         else:
             colors = {
-                'background': 'white' if not self._transparent_background else 'none',
-                'grid': 'lightgray',
-                'tide_line': 'cornflowerblue',
-                'tide_fill': 'lightblue',
-                'tide_fill_opacity': '0.3',
-                'current_marker': 'black',
-                'current_text': 'black',
-                'high_tide': 'red',
-                'low_tide': 'blue',
-                'text': 'black',
-                'title': 'black',
-                'axis_text': 'black',
+                'background': '#f5f5f5' if not self._transparent_background else 'none',  # Light gray background
+                'grid': '#d0d0d0',
+                'tide_line': '#0099ff',  # Bright blue
+                'tide_fill': '#0099ff',  # Blue fill
+                'tide_fill_opacity': '0.2',
+                'current_marker': '#ff0080',  # Hot pink marker
+                'current_text': '#000000',
+                'high_tide': '#ff0066',   # Vibrant pink for high tide
+                'low_tide': '#00cc88',    # Teal for low tide
+                'text': '#1a1a1a',        # Near-black text
+                'title': '#0066cc',       # Deep blue title
+                'axis_text': '#4a4a4a',   # Dark gray for axis text
             }
         
         # Helper functions for coordinate conversion
@@ -350,7 +350,7 @@ class TidePlotManager:
         
         if path_points:
             path_data = f"M {path_points[0]} L " + " L ".join(path_points[1:])
-            
+
             # Add filled area under curve (like matplotlib's fill_between)
             area_points = path_points.copy()
             # Add bottom line
@@ -358,47 +358,67 @@ class TidePlotManager:
             area_points.append(f"{time_to_x(max_time)},{bottom_y}")
             area_points.append(f"{time_to_x(min_time)},{bottom_y}")
             area_path = f"M {area_points[0]} L " + " L ".join(area_points[1:]) + " Z"
-            
+
             svg_parts.append(f'<path d="{area_path}" fill="{colors["tide_fill"]}" opacity="{colors["tide_fill_opacity"]}"/>')
-            svg_parts.append(f'<path d="{path_data}" stroke="{colors["tide_line"]}" stroke-width="2" fill="none"/>')
+
+            # Add glow effect for sci-fi aesthetic
+            if self._dark_mode:
+                # Outer glow (wider, more transparent)
+                svg_parts.append(f'<path d="{path_data}" stroke="{colors["tide_line"]}" stroke-width="8" fill="none" opacity="0.2"/>')
+                # Middle glow
+                svg_parts.append(f'<path d="{path_data}" stroke="{colors["tide_line"]}" stroke-width="4" fill="none" opacity="0.4"/>')
+
+            # Main line (thicker for better visibility)
+            svg_parts.append(f'<path d="{path_data}" stroke="{colors["tide_line"]}" stroke-width="3" fill="none"/>')
         
-        # Add current position marker
+        # Add current position marker with glow effect
         if current_height is not None:
             curr_x = time_to_x(current_time)
             curr_y = height_to_y(current_height)
-            svg_parts.append(f'<circle cx="{curr_x}" cy="{curr_y}" r="4" fill="{colors["current_marker"]}"/>')
-            
-            # Add current time annotation
+
+            # Add glow effect for marker
+            if self._dark_mode:
+                svg_parts.append(f'<circle cx="{curr_x}" cy="{curr_y}" r="8" fill="{colors["current_marker"]}" opacity="0.2"/>')
+                svg_parts.append(f'<circle cx="{curr_x}" cy="{curr_y}" r="6" fill="{colors["current_marker"]}" opacity="0.4"/>')
+
+            svg_parts.append(f'<circle cx="{curr_x}" cy="{curr_y}" r="5" fill="{colors["current_marker"]}"/>')
+
+            # Add current time annotation with modern font
             curr_label = f'{current_height:.2f}m @ {current_time.strftime("%H:%M")}'
             svg_parts.append(f'''
-                <text x="{curr_x}" y="{curr_y - 15}" text-anchor="middle" font-family="Arial" font-size="12" fill="{colors["current_text"]}">
+                <text x="{curr_x}" y="{curr_y - 15}" text-anchor="middle" font-family="'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif" font-size="12" font-weight="600" fill="{colors["current_text"]}">
                     {curr_label}
                 </text>
             ''')
         
-        # Add extreme markers and labels
+        # Add extreme markers and labels with glow effects
         for extreme in extremes:
             ext_x = time_to_x(extreme['time'])
             ext_y = height_to_y(extreme['height'])
             color = colors["high_tide"] if extreme['type'] == 'high' else colors["low_tide"]
-            
-            svg_parts.append(f'<circle cx="{ext_x}" cy="{ext_y}" r="4" fill="{color}"/>')
-            
+
+            # Add glow effect for extreme markers
+            if self._dark_mode:
+                svg_parts.append(f'<circle cx="{ext_x}" cy="{ext_y}" r="10" fill="{color}" opacity="0.15"/>')
+                svg_parts.append(f'<circle cx="{ext_x}" cy="{ext_y}" r="7" fill="{color}" opacity="0.3"/>')
+
+            svg_parts.append(f'<circle cx="{ext_x}" cy="{ext_y}" r="5" fill="{color}"/>')
+
             # Add label
             label_y = ext_y - 20 if extreme['type'] == 'high' else ext_y + 25
             ext_label = f"{extreme['height']:.2f}m @ {extreme['time'].strftime('%H:%M')}"
-            
-            # Different text styling for dark vs light mode
+
+            # Enhanced text styling with modern font
             if self._dark_mode:
                 svg_parts.append(f'''
-                    <text x="{ext_x}" y="{label_y}" text-anchor="middle" font-family="Arial" font-size="12" 
+                    <text x="{ext_x}" y="{label_y}" text-anchor="middle" font-family="'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif" font-size="12" font-weight="600"
                           fill="{colors["text"]}" stroke="{color}" stroke-width="1" paint-order="stroke">
                         {ext_label}
                     </text>
                 ''')
             else:
                 svg_parts.append(f'''
-                    <text x="{ext_x}" y="{label_y}" text-anchor="middle" font-family="Arial" font-size="12" 
+                    <text x="{ext_x}" y="{label_y}" text-anchor="middle" font-family="'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif" font-size="12" font-weight="600"
                           fill="white" stroke="{color}" stroke-width="3" paint-order="stroke">
                         {ext_label}
                     </text>
@@ -410,14 +430,14 @@ class TidePlotManager:
             min_time, max_time, min_height, max_height, colors['axis_text']
         ))
         
-        # Add title with dynamic text based on plot days
+        # Add title with dynamic text based on plot days - modern font
         if self._plot_days == 1:
-            title_text = f"Tide Prediction - {self._name}"
+            title_text = f"TIDE PREDICTION - {self._name.upper()}"
         else:
-            title_text = f"Tide Prediction ({self._plot_days} days) - {self._name}"
-            
+            title_text = f"TIDE PREDICTION ({self._plot_days}D) - {self._name.upper()}"
+
         svg_parts.append(f'''
-            <text x="{width/2}" y="25" text-anchor="middle" font-family="Arial" font-size="16" font-weight="bold" fill="{colors["title"]}">
+            <text x="{width/2}" y="25" text-anchor="middle" font-family="'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif" font-size="16" font-weight="700" letter-spacing="1" fill="{colors["title"]}">
                 {title_text}
             </text>
         ''')
@@ -444,34 +464,34 @@ class TidePlotManager:
 
     def _generate_axes_labels(self, margin, plot_width, plot_height, width, height,
                             min_time, max_time, min_height, max_height, text_color="black"):
-        """Generate axes labels and ticks."""
+        """Generate axes labels and ticks with modern font."""
         labels = []
-        
+
         # X-axis (time) labels
         for i in range(5):
             x = margin + (i * plot_width / 4)
             time_ratio = i / 4
             label_time = min_time + (max_time - min_time) * time_ratio
             time_label = label_time.strftime("%H:%M")
-            
-            labels.append(f'<text x="{x}" y="{height - margin + 15}" text-anchor="middle" font-family="Arial" font-size="10" fill="{text_color}">{time_label}</text>')
-        
+
+            labels.append(f'<text x="{x}" y="{height - margin + 15}" text-anchor="middle" font-family="\'Segoe UI\', \'Roboto\', \'Helvetica Neue\', sans-serif" font-size="10" font-weight="500" fill="{text_color}">{time_label}</text>')
+
         # Y-axis (height) labels
         for i in range(5):
             y = height - margin - (i * plot_height / 4)
             height_ratio = i / 4
             label_height = min_height + (max_height - min_height) * height_ratio
             height_label = f"{label_height:.1f}m"
-            
-            labels.append(f'<text x="{margin - 10}" y="{y + 3}" text-anchor="end" font-family="Arial" font-size="10" fill="{text_color}">{height_label}</text>')
-        
-        # Axis labels
-        labels.append(f'<text x="{width/2}" y="{height - 10}" text-anchor="middle" font-family="Arial" font-size="12" fill="{text_color}">Time</text>')
+
+            labels.append(f'<text x="{margin - 10}" y="{y + 3}" text-anchor="end" font-family="\'Segoe UI\', \'Roboto\', \'Helvetica Neue\', sans-serif" font-size="10" font-weight="500" fill="{text_color}">{height_label}</text>')
+
+        # Axis labels - uppercase for sci-fi aesthetic
+        labels.append(f'<text x="{width/2}" y="{height - 10}" text-anchor="middle" font-family="\'Segoe UI\', \'Roboto\', \'Helvetica Neue\', sans-serif" font-size="11" font-weight="600" letter-spacing="0.5" fill="{text_color}">TIME</text>')
         labels.append(f'''
-            <text x="15" y="{height/2}" text-anchor="middle" font-family="Arial" font-size="12" fill="{text_color}" 
-                  transform="rotate(-90, 15, {height/2})">Tide Height (m)</text>
+            <text x="15" y="{height/2}" text-anchor="middle" font-family="'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif" font-size="11" font-weight="600" letter-spacing="0.5" fill="{text_color}"
+                  transform="rotate(-90, 15, {height/2})">TIDE HEIGHT (M)</text>
         ''')
-        
+
         return labels
 
     def _generate_error_svg(self) -> str:
