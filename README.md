@@ -1,4 +1,4 @@
-# Modern Tides - Home Assistant Integration
+# Modern Tides US - Home Assistant Integration
 
 [![GitHub Release][releases-shield]][releases]
 [![GitHub Activity][commits-shield]][commits]
