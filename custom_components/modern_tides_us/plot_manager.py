@@ -61,6 +61,7 @@ class TideTableManager:
     def _extract_extremes(self, tide_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Extract high/low tide extremes from tide data."""
         extremes = []
+        seen_times = set()  # Track unique times to avoid duplicates
 
         # Check if we have multi-day data
         if "all_daily_data" in tide_data and tide_data["all_daily_data"]:
@@ -95,11 +96,15 @@ class TideTableManager:
                                 )
                                 dt = dt_util.as_local(dt)
 
-                                extremes.append({
-                                    'time': dt,
-                                    'height': float(event["altura"]),
-                                    'type': 'pleamar'
-                                })
+                                # Check for duplicates using timestamp
+                                time_key = dt.strftime("%Y%m%d%H%M")
+                                if time_key not in seen_times:
+                                    seen_times.add(time_key)
+                                    extremes.append({
+                                        'time': dt,
+                                        'height': float(event["altura"]),
+                                        'type': 'pleamar'
+                                    })
 
                     # Process low tides (bajamares)
                     if "bajamares" in mareas:
@@ -120,11 +125,15 @@ class TideTableManager:
                                 )
                                 dt = dt_util.as_local(dt)
 
-                                extremes.append({
-                                    'time': dt,
-                                    'height': float(event["altura"]),
-                                    'type': 'bajamar'
-                                })
+                                # Check for duplicates using timestamp
+                                time_key = dt.strftime("%Y%m%d%H%M")
+                                if time_key not in seen_times:
+                                    seen_times.add(time_key)
+                                    extremes.append({
+                                        'time': dt,
+                                        'height': float(event["altura"]),
+                                        'type': 'bajamar'
+                                    })
 
         return sorted(extremes, key=lambda x: x['time'])
 
