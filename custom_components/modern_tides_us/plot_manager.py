@@ -222,43 +222,9 @@ class TidePlotManager:
         return None
 
     def _find_extremes(self, predictions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Find high and low tide extremes in the predictions."""
-        if len(predictions) < 3:
-            return []
-
-        extremes = []
-
-        for i in range(0, len(predictions)):
-            if i == 0:
-                prev_height = predictions[i]['height']
-                curr_height = predictions[i]['height']
-                next_height = predictions[i + 1]['height']
-            elif i == (len(predictions) - 1):
-                prev_height = predictions[i - 1]['height']
-                curr_height = predictions[i]['height']
-                next_height = predictions[i]['height']
-            else:
-                prev_height = predictions[i - 1]['height']
-                curr_height = predictions[i]['height']
-                next_height = predictions[i + 1]['height']
-
-            # High tide: peak
-            if curr_height >= prev_height and curr_height >= next_height:
-                extremes.append({
-                    'time': predictions[i]['time'],
-                    'height': curr_height,
-                    'type': 'high'
-                })
-
-            # Low tide: trough
-            elif curr_height <= prev_height and curr_height <= next_height:
-                extremes.append({
-                    'time': predictions[i]['time'],
-                    'height': curr_height,
-                    'type': 'low'
-                })
-
-        return extremes
+        """Find high and low tide extremes - disabled for clean minimal plot."""
+        # Return empty list to prevent marker clutter
+        return []
 
     def _generate_svg_plot(
         self,
@@ -291,36 +257,22 @@ class TidePlotManager:
         min_height -= height_range * 0.1
         max_height += height_range * 0.1
         
-        # Define color scheme based on mode - High-contrast sci-fi aesthetic
+        # Clean minimal color scheme
         if self._dark_mode:
             colors = {
-                'background': '#0a0e14' if not self._transparent_background else 'none',  # Deep space blue-black
-                'grid': '#1a2332',  # Subtle grid for depth
-                'tide_line': '#00f6ff',  # Bright cyan (neon blue)
-                'tide_fill': '#00f6ff',  # Cyan fill with opacity
-                'tide_fill_opacity': '0.15',
-                'current_marker': '#ff00ff',  # Magenta marker
-                'current_text': '#00f6ff',   # Cyan text
-                'high_tide': '#ff0080',   # Hot pink/magenta for high tide
-                'low_tide': '#00ff9f',    # Neon green for low tide
-                'text': '#e0e0e0',        # Near-white text
-                'title': '#00f6ff',       # Cyan title
-                'axis_text': '#8899aa',   # Muted blue-gray for axis text
+                'background': '#000000' if not self._transparent_background else 'none',
+                'tide_line': '#FFFFFF',
+                'text': '#FFFFFF',
+                'title': '#FFFFFF',
+                'axis_text': '#FFFFFF',
             }
         else:
             colors = {
-                'background': '#f5f5f5' if not self._transparent_background else 'none',  # Light gray background
-                'grid': '#d0d0d0',
-                'tide_line': '#0099ff',  # Bright blue
-                'tide_fill': '#0099ff',  # Blue fill
-                'tide_fill_opacity': '0.2',
-                'current_marker': '#ff0080',  # Hot pink marker
-                'current_text': '#000000',
-                'high_tide': '#ff0066',   # Vibrant pink for high tide
-                'low_tide': '#00cc88',    # Teal for low tide
-                'text': '#1a1a1a',        # Near-black text
-                'title': '#0066cc',       # Deep blue title
-                'axis_text': '#4a4a4a',   # Dark gray for axis text
+                'background': '#FFFFFF' if not self._transparent_background else 'none',
+                'tide_line': '#000000',
+                'text': '#000000',
+                'title': '#000000',
+                'axis_text': '#000000',
             }
         
         # Helper functions for coordinate conversion
@@ -338,62 +290,30 @@ class TidePlotManager:
             f'<rect width="{width}" height="{height}" fill="{colors["background"]}"/>',
         ]
         
-        # Add grid
-        svg_parts.extend(self._generate_grid(margin, plot_width, plot_height, width, height, colors['grid']))
-        
-        # Generate tide curve path
+        # Generate tide curve path - clean single line
         path_points = []
         for point in curve_points:
             x = time_to_x(point['time'])
             y = height_to_y(point['height'])
             path_points.append(f"{x},{y}")
-        
+
         if path_points:
             path_data = f"M {path_points[0]} L " + " L ".join(path_points[1:])
-
-            # Add filled area under curve (like matplotlib's fill_between)
-            area_points = path_points.copy()
-            # Add bottom line
-            bottom_y = height_to_y(min_height)
-            area_points.append(f"{time_to_x(max_time)},{bottom_y}")
-            area_points.append(f"{time_to_x(min_time)},{bottom_y}")
-            area_path = f"M {area_points[0]} L " + " L ".join(area_points[1:]) + " Z"
-
-            svg_parts.append(f'<path d="{area_path}" fill="{colors["tide_fill"]}" opacity="{colors["tide_fill_opacity"]}"/>')
-
             # Single clean tide line
             svg_parts.append(f'<path d="{path_data}" stroke="{colors["tide_line"]}" stroke-width="2" fill="none"/>')
-        
+
         # Add current position marker
         if current_height is not None:
             curr_x = time_to_x(current_time)
             curr_y = height_to_y(current_height)
 
-            svg_parts.append(f'<circle cx="{curr_x}" cy="{curr_y}" r="4" fill="{colors["current_marker"]}"/>')
+            svg_parts.append(f'<circle cx="{curr_x}" cy="{curr_y}" r="4" fill="{colors["tide_line"]}"/>')
 
-            # Add current time annotation
+            # Add current time annotation with Courier font
             curr_label = f'{current_height:.2f}m @ {current_time.strftime("%H:%M")}'
             svg_parts.append(f'''
-                <text x="{curr_x}" y="{curr_y - 15}" text-anchor="middle" font-family="'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif" font-size="11" font-weight="500" fill="{colors["current_text"]}">
+                <text x="{curr_x}" y="{curr_y - 15}" text-anchor="middle" font-family="'Courier New', 'Courier', monospace" font-size="11" fill="{colors["text"]}">
                     {curr_label}
-                </text>
-            ''')
-        
-        # Add extreme markers and labels
-        for extreme in extremes:
-            ext_x = time_to_x(extreme['time'])
-            ext_y = height_to_y(extreme['height'])
-            color = colors["high_tide"] if extreme['type'] == 'high' else colors["low_tide"]
-
-            svg_parts.append(f'<circle cx="{ext_x}" cy="{ext_y}" r="4" fill="{color}"/>')
-
-            # Add label
-            label_y = ext_y - 20 if extreme['type'] == 'high' else ext_y + 25
-            ext_label = f"{extreme['height']:.2f}m @ {extreme['time'].strftime('%H:%M')}"
-
-            svg_parts.append(f'''
-                <text x="{ext_x}" y="{label_y}" text-anchor="middle" font-family="'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif" font-size="11" font-weight="500" fill="{colors["text"]}">
-                    {ext_label}
                 </text>
             ''')
         
@@ -403,14 +323,14 @@ class TidePlotManager:
             min_time, max_time, min_height, max_height, colors['axis_text']
         ))
         
-        # Add title with dynamic text based on plot days - modern font
+        # Add title with Courier font
         if self._plot_days == 1:
             title_text = f"TIDE PREDICTION - {self._name.upper()}"
         else:
             title_text = f"TIDE PREDICTION ({self._plot_days}D) - {self._name.upper()}"
 
         svg_parts.append(f'''
-            <text x="{width/2}" y="25" text-anchor="middle" font-family="'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif" font-size="16" font-weight="700" letter-spacing="1" fill="{colors["title"]}">
+            <text x="{width/2}" y="25" text-anchor="middle" font-family="'Courier New', 'Courier', monospace" font-size="14" fill="{colors["title"]}">
                 {title_text}
             </text>
         ''')
@@ -437,7 +357,7 @@ class TidePlotManager:
 
     def _generate_axes_labels(self, margin, plot_width, plot_height, width, height,
                             min_time, max_time, min_height, max_height, text_color="black"):
-        """Generate axes labels and ticks with modern font."""
+        """Generate axes labels with Courier font."""
         labels = []
 
         # X-axis (time) labels
@@ -447,7 +367,7 @@ class TidePlotManager:
             label_time = min_time + (max_time - min_time) * time_ratio
             time_label = label_time.strftime("%H:%M")
 
-            labels.append(f'<text x="{x}" y="{height - margin + 15}" text-anchor="middle" font-family="\'Segoe UI\', \'Roboto\', \'Helvetica Neue\', sans-serif" font-size="10" font-weight="500" fill="{text_color}">{time_label}</text>')
+            labels.append(f'<text x="{x}" y="{height - margin + 15}" text-anchor="middle" font-family="\'Courier New\', \'Courier\', monospace" font-size="10" fill="{text_color}">{time_label}</text>')
 
         # Y-axis (height) labels
         for i in range(5):
@@ -456,12 +376,12 @@ class TidePlotManager:
             label_height = min_height + (max_height - min_height) * height_ratio
             height_label = f"{label_height:.1f}m"
 
-            labels.append(f'<text x="{margin - 10}" y="{y + 3}" text-anchor="end" font-family="\'Segoe UI\', \'Roboto\', \'Helvetica Neue\', sans-serif" font-size="10" font-weight="500" fill="{text_color}">{height_label}</text>')
+            labels.append(f'<text x="{margin - 10}" y="{y + 3}" text-anchor="end" font-family="\'Courier New\', \'Courier\', monospace" font-size="10" fill="{text_color}">{height_label}</text>')
 
-        # Axis labels - uppercase for sci-fi aesthetic
-        labels.append(f'<text x="{width/2}" y="{height - 10}" text-anchor="middle" font-family="\'Segoe UI\', \'Roboto\', \'Helvetica Neue\', sans-serif" font-size="11" font-weight="600" letter-spacing="0.5" fill="{text_color}">TIME</text>')
+        # Axis labels
+        labels.append(f'<text x="{width/2}" y="{height - 10}" text-anchor="middle" font-family="\'Courier New\', \'Courier\', monospace" font-size="10" fill="{text_color}">TIME</text>')
         labels.append(f'''
-            <text x="15" y="{height/2}" text-anchor="middle" font-family="'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif" font-size="11" font-weight="600" letter-spacing="0.5" fill="{text_color}"
+            <text x="15" y="{height/2}" text-anchor="middle" font-family="'Courier New', 'Courier', monospace" font-size="10" fill="{text_color}"
                   transform="rotate(-90, 15, {height/2})">TIDE HEIGHT (M)</text>
         ''')
 
