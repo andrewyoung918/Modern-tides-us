@@ -532,6 +532,21 @@ class TidePlotManager:
 
         return elements
 
+    def _decimate_curve_points(self, curve_points: List[Dict[str, Any]], max_points: int = 200) -> List[Dict[str, Any]]:
+        """Reduce the number of curve points for smoother rendering while preserving shape."""
+        if len(curve_points) <= max_points:
+            return curve_points
+
+        # Use simple decimation - take every Nth point
+        step = len(curve_points) // max_points
+        decimated = [curve_points[i] for i in range(0, len(curve_points), step)]
+
+        # Always include the last point
+        if decimated[-1] != curve_points[-1]:
+            decimated.append(curve_points[-1])
+
+        return decimated
+
     def _generate_svg_plot(
         self,
         curve_points: List[Dict[str, Any]],
@@ -608,17 +623,20 @@ class TidePlotManager:
             time_to_x, colors
         ))
 
+        # Decimate curve points to prevent rendering artifacts
+        decimated_points = self._decimate_curve_points(curve_points, max_points=200)
+
         # Generate tide curve path - clean single line
         path_points = []
-        for point in curve_points:
+        for point in decimated_points:
             x = time_to_x(point['time'])
             y = height_to_y(point['height'])
             path_points.append(f"{x},{y}")
 
         if path_points:
             path_data = f"M {path_points[0]} L " + " L ".join(path_points[1:])
-            # Single clean tide line
-            svg_parts.append(f'<path d="{path_data}" stroke="{colors["tide_line"]}" stroke-width="2" fill="none"/>')
+            # Single clean tide line with anti-aliasing
+            svg_parts.append(f'<path d="{path_data}" stroke="{colors["tide_line"]}" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" shape-rendering="geometricPrecision"/>')
 
         # Add high/low tide markers with labels
         for extreme in extremes:
