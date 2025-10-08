@@ -467,13 +467,21 @@ class TidePlotManager:
         time_to_x,
         colors: Dict[str, str]
     ) -> List[str]:
-        """Generate daylight gradient backgrounds and sunrise/sunset markers."""
+        """Generate daylight gradient backgrounds, sunrise/sunset markers, and day labels."""
         elements = []
 
         # Approximate sunrise and sunset times (6 AM to 6 PM for simplicity)
         # In a production version, you'd use a library like astral for accurate times
         current_day = min_time.date()
         days_in_range = (max_time.date() - min_time.date()).days + 1
+
+        # Determine day label format based on chart duration
+        if self._plot_days <= 2:
+            # Full day names for 1-2 day charts
+            day_format = "%A"  # Monday, Tuesday, etc.
+        else:
+            # Single letter initials for 3+ day charts
+            day_format = "%a"  # Mon, Tue, etc. - we'll take first letter
 
         for day_offset in range(days_in_range):
             day = current_day + datetime.timedelta(days=day_offset)
@@ -496,6 +504,19 @@ class TidePlotManager:
                     elements.append(f'''
                         <rect x="{sunrise_x}" y="{margin}" width="{gradient_width}" height="{plot_height}"
                               fill="{colors["daylight"]}" opacity="{opacity}"/>
+                    ''')
+
+                    # Add day label centered in daylight section
+                    center_x = sunrise_x + (gradient_width / 2)
+                    day_label = day.strftime(day_format)
+                    if self._plot_days > 2:
+                        day_label = day_label[0]  # Just first letter (M, T, W, etc.)
+
+                    elements.append(f'''
+                        <text x="{center_x}" y="{height - margin + 30}" text-anchor="middle"
+                              font-family="'Courier New', 'Courier', monospace" font-size="12" font-weight="bold" fill="{colors["text"]}">
+                            {day_label}
+                        </text>
                     ''')
 
                     # Add sunrise/sunset lines only for charts 3 days or fewer
@@ -634,7 +655,27 @@ class TidePlotManager:
             path_points.append(f"{x},{y}")
 
         if path_points:
-            path_data = f"M {path_points[0]} L " + " L ".join(path_points[1:])
+            # Use smooth curves instead of straight lines for natural tide flow
+            if len(path_points) > 2:
+                # Start with move to first point
+                path_data = f"M {path_points[0]}"
+
+                # Use quadratic bezier curves for smooth transitions
+                for i in range(1, len(path_points) - 1):
+                    # Control point is the current point, target is midpoint to next
+                    curr_parts = path_points[i].split(',')
+                    next_parts = path_points[i + 1].split(',')
+                    curr_x, curr_y = float(curr_parts[0]), float(curr_parts[1])
+                    next_x, next_y = float(next_parts[0]), float(next_parts[1])
+                    mid_x, mid_y = (curr_x + next_x) / 2, (curr_y + next_y) / 2
+
+                    path_data += f" Q {curr_x},{curr_y} {mid_x},{mid_y}"
+
+                # End with line to last point
+                path_data += f" L {path_points[-1]}"
+            else:
+                path_data = f"M {path_points[0]} L " + " L ".join(path_points[1:])
+
             # Single clean tide line with anti-aliasing
             svg_parts.append(f'<path d="{path_data}" stroke="{colors["tide_line"]}" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" shape-rendering="geometricPrecision"/>')
 
@@ -649,17 +690,29 @@ class TidePlotManager:
             # Draw marker circle
             svg_parts.append(f'<circle cx="{ext_x}" cy="{ext_y}" r="5" fill="{marker_color}"/>')
 
-            # Add label with time (AM/PM) and height
+            # Add label with time (AM/PM) and height on separate lines
             time_str = extreme['time'].strftime("%I:%M%p").lstrip('0')  # Remove leading zero, add AM/PM
             height_str = f"{extreme['height']:.1f}m"
-            label = f"{height_str} @ {time_str}"
 
-            # Position label above for high tides, below for low tides
-            label_y = ext_y - 18 if is_high else ext_y + 20
+            # Position labels above for high tides, below for low tides
+            if is_high:
+                height_y = ext_y - 22
+                time_y = ext_y - 10
+            else:
+                height_y = ext_y + 16
+                time_y = ext_y + 28
 
+            # Height label
             svg_parts.append(f'''
-                <text x="{ext_x}" y="{label_y}" text-anchor="middle" font-family="'Courier New', 'Courier', monospace" font-size="10" fill="{colors["text"]}">
-                    {label}
+                <text x="{ext_x}" y="{height_y}" text-anchor="middle" font-family="'Courier New', 'Courier', monospace" font-size="10" font-weight="bold" fill="{marker_color}">
+                    {height_str}
+                </text>
+            ''')
+
+            # Time label
+            svg_parts.append(f'''
+                <text x="{ext_x}" y="{time_y}" text-anchor="middle" font-family="'Courier New', 'Courier', monospace" font-size="9" fill="{colors["text"]}">
+                    {time_str}
                 </text>
             ''')
 
@@ -670,14 +723,23 @@ class TidePlotManager:
 
             svg_parts.append(f'<circle cx="{curr_x}" cy="{curr_y}" r="4" fill="{colors["tide_line"]}"/>')
 
-            # Add current time annotation with Courier font - always to the right
-            time_str = current_time.strftime("%I:%M%p").lstrip('0')
-            curr_label = f'{current_height:.2f}m @ {time_str}'
-            svg_parts.append(f'''
-                <text x="{curr_x + 10}" y="{curr_y + 4}" text-anchor="start" font-family="'Courier New', 'Courier', monospace" font-size="11" fill="{colors["text"]}">
-                    {curr_label}
-                </text>
-            ''')
+            # Check if current time is within 1 hour of any extreme to avoid label overlap
+            show_current_label = True
+            for extreme in extremes:
+                time_diff = abs((current_time - extreme['time']).total_seconds())
+                if time_diff < 3600:  # 1 hour = 3600 seconds
+                    show_current_label = False
+                    break
+
+            # Add current time annotation with Courier font - always to the right (if not too close to extremes)
+            if show_current_label:
+                time_str = current_time.strftime("%I:%M%p").lstrip('0')
+                curr_label = f'{current_height:.2f}m @ {time_str}'
+                svg_parts.append(f'''
+                    <text x="{curr_x + 10}" y="{curr_y + 4}" text-anchor="start" font-family="'Courier New', 'Courier', monospace" font-size="11" fill="{colors["text"]}">
+                        {curr_label}
+                    </text>
+                ''')
 
         # Add title with Courier font
         if self._plot_days == 1:
