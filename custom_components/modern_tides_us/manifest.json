@@ -1,0 +1,14 @@
+{
+  "domain": "modern_tides_us",
+  "name": "Modern Tides US",
+  "codeowners": ["@andrewyoung918"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/andrewyoung918/Modern-tides-us",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/andrewyoung918/Modern-tides-us/issues",
+  "quality_scale": "silver",
+  "requirements": ["requests>=2.25.0", "aiofiles>=23.0.0"],
+  "version": "1.2.0"
+}
